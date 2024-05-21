@@ -1,6 +1,55 @@
 #pragma once
 
 
+//#define BENCHMARK // disable all extensions and setups and run benchmark setup instead
+#define USE_FXFILE // get stl filename from %FXFILE% env var (or -f switch)
+
+#ifndef BENCHMARK
+#define DEMO_CONCORDE
+//#define DEMO_3D_TAYLOR_GREEN_VORTICES
+//#define DEMO_NASA_COMMON_RESEARCH_MODEL
+//#define DEMO_2D_TAYLOR-GREEN_VORTICES //cnd
+//#define DEMO_POISEUILLE_FLOW //cnd
+//#define DEMO_STOKES_DRAG //cnd
+//#define DEMO_CYLINDER_IN_RECTANGULAR_DUCT //cnd
+//#define DEMO_TAYLOR_COUETTE_FLOW //cnd
+//#define DEMO_LID_DRIVEN_CAVITY //cnd
+//#define DEMO_2D_KARMAN_VORTEX_STREET //cnd
+//#define DEMO_PARTICLE_TEST //cnd
+//#define DEMO_DELTA_WING //cnd
+//#define DEMO_NASA_COMMON_RESEARCH_MODEL //cnd - NG
+//#define DEMO_BOEING_747 //cnd
+//#define DEMO_CND_GLIDER //cnd
+//#define DEMO_STAR_WARS_X_WING //cnd
+//#define DEMO_STAR_WARS_TIE_FIGHTER //cnd
+//#define DEMO_RADIAL_FAN //cnd
+//#define DEMO_ELECTRIC_DUCTED_FAN //cnd
+//#define DEMO_AERODYNAMIC_COW //cnd
+//#define DEMO_SPACE_SHUTTLE //cnd
+//#define DEMO_STARSHIP //cnd
+//#define DEMO_AHMED_BODY //cnd
+//#define DEMO_CESSNA_172 //cnd
+//#define DEMO_BELL_222_HELICOPTER //cnd
+//#define DEMO_MERCEDES_F1_W14_CAR //cnd
+//#define DEMO_HYDRAULIC_JUMP //cnd
+//#define DEMO_DAM_BREAK //cnd
+//#define DEMO_LIQUID_METAL_ON_A_SPEAKER //cnd
+//#define DEMO_BREAKING_WAVES_ON_BEACH //cnd
+//#define DEMO_RIVER //cnd
+//#define DEMO_RAINDROP_IMPACT //cnd
+//#define DEMO_BURSTING_BUBBLE //cnd
+//#define DEMO_CUBE_WITH_CHANGING_GRAVITY //cnd
+//#define DEMO_PERIODIC_FAUCET //cnd
+//#define DEMO_COLLIDING_DROPLETS //cnd
+//#define DEMO_RAYLEIGH_BENARD_CONVECTION //cnd
+//#define DEMO_THERMAL_CONVECTION //cnd
+
+
+#endif // BENCHMARK   || defined()
+
+
+//#define FP16S // compress LBM DDFs to range-shifted IEEE-754 FP16; number conversion is done in hardware; all arithmetic is still done in FP32
+#define FP16C // compress LBM DDFs to more accurate custom FP16C format; number conversion is emulated in software; all arithmetic is still done in FP32
 
 //#define D2Q9 // choose D2Q9 velocity set for 2D; allocates 53 (FP32) or 35 (FP16) Bytes/cell
 //#define D3Q15 // choose D3Q15 velocity set for 3D; allocates 77 (FP32) or 47 (FP16) Bytes/cell
@@ -10,24 +59,49 @@
 #define SRT // choose single-relaxation-time LBM collision operator; (default)
 //#define TRT // choose two-relaxation-time LBM collision operator
 
-//#define FP16S // compress LBM DDFs to range-shifted IEEE-754 FP16; number conversion is done in hardware; all arithmetic is still done in FP32
-//#define FP16C // compress LBM DDFs to more accurate custom FP16C format; number conversion is emulated in software; all arithmetic is still done in FP32
+#if defined(DEMO_CONCORDE) || defined(DEMO_BOEING_747) || defined(DEMO_CND_GLIDER) || defined(DEMO_DELTA_WING) || defined(DEMO_RADIAL_FAN) || defined(DEMO_ELECTRIC_DUCTED_FAN) || defined(DEMO_SPACE_SHUTTLE) || defined(DEMO_CESSNA_172) || defined(DEMO_AERODYNAMIC_COW) || defined(DEMO_DAM_BREAK)
+#define FP16S // compress LBM DDFs to range-shifted IEEE-754 FP16; number conversion is done in hardware; all arithmetic is still done in FP32
+#endif
+#if defined(DEMO_NASA_COMMON_RESEARCH_MODEL) || defined(DEMO_RAINDROP_IMPACT)
+#define FP16C // compress LBM DDFs to more accurate custom FP16C format; number conversion is emulated in software; all arithmetic is still done in FP32
+#endif
 
-#define BENCHMARK // disable all extensions and setups and run benchmark setup instead
-
-//#define VOLUME_FORCE // enables global force per volume in one direction (equivalent to a pressure gradient); specified in the LBM class constructor; the force can be changed on-the-fly between time steps at no performance cost
-//#define FORCE_FIELD // enables computing the forces on solid boundaries with lbm.calculate_force_on_boundaries(); and enables setting the force for each lattice point independently (enable VOLUME_FORCE too); allocates an extra 12 Bytes/cell
-//#define EQUILIBRIUM_BOUNDARIES // enables fixing the velocity/density by marking cells with TYPE_E; can be used for inflow/outflow; does not reflect shock waves
-//#define MOVING_BOUNDARIES // enables moving solids: set solid cells to TYPE_S and set their velocity u unequal to zero
-//#define SURFACE // enables free surface LBM: mark fluid cells with TYPE_F; at initialization the TYPE_I interface and TYPE_G gas domains will automatically be completed; allocates an extra 12 Bytes/cell
+#if defined(DEMO_PARTICLE_TEST) || defined(DEMO_RAINDROP_IMPACT) || defined(DEMO_DAM_BREAK)
+#define VOLUME_FORCE // enables global force per volume in one direction (equivalent to a pressure gradient); specified in the LBM class constructor; the force can be changed on-the-fly between time steps at no performance cost
+#endif
+#if defined(DEMO_STOKES_DRAG) || defined(DEMO_PARTICLE_TEST)
+#define FORCE_FIELD // enables computing the forces on solid boundaries with lbm.calculate_force_on_boundaries(); and enables setting the force for each lattice point independently (enable VOLUME_FORCE too); allocates an extra 12 Bytes/cell
+#endif
+#if defined(DEMO_CONCORDE) || defined(DEMO_NASA_COMMON_RESEARCH_MODEL) || defined(DEMO_BOEING_747) || defined(DEMO_CND_GLIDER) || defined(DEMO_STOKES_DRAG) || defined(DEMO_DELTA_WING) || defined(DEMO_ELECTRIC_DUCTED_FAN) || defined(DEMO_SPACE_SHUTTLE) || defined(DEMO_RAINDROP_IMPACT) || defined(DEMO_CESSNA_172) || defined(DEMO_AERODYNAMIC_COW)
+#define EQUILIBRIUM_BOUNDARIES // enables fixing the velocity/density by marking cells with TYPE_E; can be used for inflow/outflow; does not reflect shock waves
+#endif
+#if defined(DEMO_PARTICLE_TEST) || defined(DEMO_RADIAL_FAN) || defined(DEMO_ELECTRIC_DUCTED_FAN) || defined(DEMO_CESSNA_172)
+#define MOVING_BOUNDARIES // enables moving solids: set solid cells to TYPE_S and set their velocity u unequal to zero
+#endif
+#if defined(DEMO_RAINDROP_IMPACT) || defined(DEMO_DAM_BREAK)
+#define SURFACE // enables free surface LBM: mark fluid cells with TYPE_F; at initialization the TYPE_I interface and TYPE_G gas domains will automatically be completed; allocates an extra 12 Bytes/cell
+#endif
 //#define TEMPERATURE // enables temperature extension; set fixed-temperature cells with TYPE_T (similar to EQUILIBRIUM_BOUNDARIES); allocates an extra 32 (FP32) or 18 (FP16) Bytes/cell
-//#define SUBGRID // enables Smagorinsky-Lilly subgrid turbulence LES model to keep simulations with very large Reynolds number stable
-//#define PARTICLES // enables particles with immersed-boundary method (for 2-way coupling also activate VOLUME_FORCE and FORCE_FIELD; only supported in single-GPU)
+#if defined(DEMO_CONCORDE) || defined(DEMO_NASA_COMMON_RESEARCH_MODEL) || defined(DEMO_BOEING_747) || defined(DEMO_CND_GLIDER) || defined(DEMO_DELTA_WING) || defined(DEMO_RADIAL_FAN) || defined(DEMO_ELECTRIC_DUCTED_FAN) || defined(DEMO_SPACE_SHUTTLE) || defined(DEMO_CESSNA_172) || defined(DEMO_AERODYNAMIC_COW)
+#define SUBGRID // enables Smagorinsky-Lilly subgrid turbulence LES model to keep simulations with very large Reynolds number stable
+#endif
+#if defined(DEMO_PARTICLE_TEST)
+#define PARTICLES // enables particles with immersed-boundary method (for 2-way coupling also activate VOLUME_FORCE and FORCE_FIELD; only supported in single-GPU)
+#endif
 
-//#define INTERACTIVE_GRAPHICS // enable interactive graphics; start/pause the simulation by pressing P; either Windows or Linux X11 desktop must be available; on Linux: change to "compile on Linux with X11" command in make.sh
+
 //#define INTERACTIVE_GRAPHICS_ASCII // enable interactive graphics in ASCII mode the console; start/pause the simulation by pressing P
-//#define GRAPHICS // run FluidX3D in the console, but still enable graphics functionality for writing rendered frames to the hard drive
+//#define GRAPHICS // run FluidX3D in the console, but still enable graphics functionality for writing rendered frames to the hard drive bin/export/*png folder
 
+#ifndef GRAPHICS
+#ifndef INTERACTIVE_GRAPHICS_ASCII
+#if defined(DEMO_CONCORDE) || defined(DEMO_3D_TAYLOR_GREEN_VORTICES) || defined(DEMO_NASA_COMMON_RESEARCH_MODEL) || defined(DEMO_BOEING_747) || defined(DEMO_CND_GLIDER) || defined(DEMO_PARTICLE_TEST) || defined(DEMO_DELTA_WING) || defined(DEMO_RADIAL_FAN) || defined(DEMO_ELECTRIC_DUCTED_FAN) || defined(DEMO_SPACE_SHUTTLE) || defined(DEMO_RAINDROP_IMPACT) || defined(DEMO_CESSNA_172) || defined(DEMO_AERODYNAMIC_COW) || defined(DEMO_DAM_BREAK)
+  #define INTERACTIVE_GRAPHICS // enable interactive graphics; start/pause the simulation by pressing P; either Windows or Linux X11 desktop must be available; on Linux: change to "compile on Linux with X11" command in make.sh
+#endif
+#endif // INTERACTIVE_GRAPHICS_ASCII
+#endif // GRAPHICS
+
+#define GRAPHICS_FULLSCREEN 1 // comment this out to get a window cnd
 #define GRAPHICS_FRAME_WIDTH 1920 // set frame width if only GRAPHICS is enabled
 #define GRAPHICS_FRAME_HEIGHT 1080 // set frame height if only GRAPHICS is enabled
 #define GRAPHICS_BACKGROUND_COLOR 0x000000 // set background color; black background (default) = 0x000000, white background = 0xFFFFFF

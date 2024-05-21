@@ -56,6 +56,11 @@ typedef uint64_t ulong;
 #define inf_double as_double(0x7FF0000000000000)
 #define nan_double as_double(0xFFFFFFFFFFFFFFFF)
 
+#include "cxxopts.hpp"
+extern cxxopts::ParseResult g_args;
+extern bool key_P;
+
+
 inline void parallel_for(const uint N, const uint threads, std::function<void(uint, uint)> lambda) { // usage: parallel_for(N, threads, [&](uint n, uint t) { ... });
 	vector<thread> thread_array(threads);
 	for(uint t=0u; t<threads; t++) thread_array[t] = thread([=]() {
@@ -2652,7 +2657,96 @@ inline string decimal_to_string_double(ulong x, int digits) {
 }
 
 inline vector<string> get_main_arguments(int argc, char* argv[]) {
-	return argc>1 ? vector<string>(argv+1, argv+argc) : vector<string>();
+	// return argc>1 ? vector<string>(argv+1, argv+argc) : vector<string>();
+
+#if defined(_WIN32)
+        // Adjust arguments to replace / with - for cxxopts
+        std::vector<std::string> args(argv, argv + argc);
+        for (auto& arg : args) { if (arg[0] == '/') { arg[0] = '-'; } }
+        std::vector<char*> new_argv;
+        for (auto& arg : args) { new_argv.push_back(const_cast<char*>(arg.c_str())); }
+#endif
+
+    cxxopts::Options options(argv[0], "Lattice Boltzmann CFD software by Dr. Moritz Lehmann");
+
+    options.add_options()
+        ("h,help", "Print help")
+        ("x", "X proportion factor", cxxopts::value<float>()->default_value("1.0"))
+        ("y", "Y proportion factor", cxxopts::value<float>()->default_value("1.0"))
+        ("z", "Z proportion factor", cxxopts::value<float>()->default_value("1.0"))
+        ("r,resolution", "Resolution", cxxopts::value<unsigned int>()->default_value("4096"))
+        ("re", "Reynolds number", cxxopts::value<float>()->default_value("100000.0"))
+        ("u", "Velocity", cxxopts::value<float>()->default_value("0.1"))
+        ("t,time", "Time", cxxopts::value<unsigned int>()->default_value("10000"))
+        ("scale", "Scale", cxxopts::value<float>()->default_value("0.9"))
+        ("f,file", "Filename", cxxopts::value<std::string>()->default_value("input.stl"))
+        ("a,aoa", "Angle of attack", cxxopts::value<float>()->default_value("-5.0"))
+        ("camx", "Camera X", cxxopts::value<float>()->default_value("19.0"))
+        ("camy", "Camera Y", cxxopts::value<float>()->default_value("19.1"))
+        ("camz", "Camera Z", cxxopts::value<float>()->default_value("19.2"))
+        ("camzoom", "Camera Zoom", cxxopts::value<float>()->default_value("1.0"))
+        ("camrx", "Camera Rotation X", cxxopts::value<float>()->default_value("33.0"))
+        ("camry", "Camera Rotation Y", cxxopts::value<float>()->default_value("42.0"))
+        ("camfov", "Camera Field of View", cxxopts::value<float>()->default_value("68.0"))
+        ("s,secs", "Seconds", cxxopts::value<float>()->default_value("10.0"))
+        ("w,window", "Enable window instead of fullscreen mode", cxxopts::value<bool>()->default_value("false"))
+        ("wait", "Wait for keypress befor ending", cxxopts::value<bool>()->default_value("false"))
+        ("pause", "Do not auto-start the simulation", cxxopts::value<bool>()->default_value("false"))
+
+        ("SUBGRID", "Use SUBGRID #define", cxxopts::value<bool>()->default_value("false"))
+
+        ("d,display", "Display", cxxopts::value<std::string>()->default_value("0,1"));
+
+    //auto result = options.parse(argc, argv);
+#if defined(_WIN32)
+     g_args = options.parse(new_argv.size(), new_argv.data());
+#else
+    g_args = options.parse(argc, argv);
+#endif
+
+    if (g_args.count("help")) {
+        std::cout << options.help() << std::endl;
+        exit(0);
+    }
+
+    if (!g_args["pause"].as<bool>()) key_P= true;
+
+    /*
+
+    float x = g_args["x"].as<float>();
+    float y = g_args["y"].as<float>();
+    float z = g_args["z"].as<float>();
+    unsigned int resolution = g_args["r"].as<unsigned int>();
+    float re = g_args["re"].as<float>();
+    float u = g_args["u"].as<float>();
+    unsigned int time = g_args["t"].as<unsigned int>();
+    float scale = g_args["scale"].as<float>();
+    std::string filename = g_args["f"].as<std::string>();
+    float aoa = g_args["a"].as<float>();
+    float camx = g_args["camx"].as<float>();
+    float camy = g_args["camy"].as<float>();
+    float camz = g_args["camz"].as<float>();
+    float camzoom = g_args["camzoom"].as<float>();
+    float camrx = g_args["camrx"].as<float>();
+    float camry = g_args["camry"].as<float>();
+    float camfov = g_args["camfov"].as<float>();
+    float secs = g_args["s"].as<float>();
+    std::string display = g_args["d"].as<std::string>();
+
+    */
+
+    if (g_args.count("d")) {
+      std::string d_param = g_args["d"].as<std::string>();
+      std::istringstream tokenStream(d_param);
+      std::string token;
+      vector<string> main_arguments; // original console arguments
+      while (std::getline(tokenStream, token, ',')) {
+        main_arguments.push_back(token);
+      }
+      return main_arguments;
+    } else {
+      return vector<string>();
+    }
 }
 
 inline string to_string(const string& s){
@@ -2851,7 +2945,9 @@ inline void reprint(const string& s="") {
 	std::cout << "\r"+s;
 }
 inline void wait() {
-	std::cin.get();
+        if(g_args["wait"].as<bool>()) {
+	  std::cin.get();
+        }
 }
 template<typename T> inline void println(const T& x) {
 	println(to_string(x));
@@ -3931,7 +4027,7 @@ inline void print_message(const string& message, const string& keyword="", const
 inline void print_error(const string& s) { // print formatted error message
 	print_message(s, "Error", color_red);
 #ifdef _WIN32
-	print_message("Press Enter to exit.", "     ", -1, false);
+        if(g_args["wait"].as<bool>()) print_message("Press Enter to exit.", "     ", -1, false);
 #endif // _WIN32
 	string b = "";
 	for(int i=0; i<CONSOLE_WIDTH-2; i++) b += "-";
@@ -4016,7 +4112,7 @@ inline void print_message(const string& message, const string& keyword="", const
 inline void print_error(const string& s) { // print error message
 	println("Error: "+s);
 #ifdef _WIN32
-	println("       Press Enter to exit.");
+        if(g_args["wait"].as<bool>()) println("       Press Enter to exit.");
 	wait();
 #endif //_WIN32
 	exit(1);
