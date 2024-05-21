@@ -1395,7 +1395,7 @@ string opencl_c_container() { return R( // ########################## begin of O
 
 
 
-)+R(kernel void initialize)+"("+R(global fpxx* fi, const global float* rho, global float* u, global uchar* flags // ) { // initialize LBM
+)+R(kernel void initialize)+"("+R(global fpxx* fi, const global float* rho, global float* u, global uchar* flags // () { // initialize LBM //cnd}
 )+"#ifdef SURFACE"+R(
 	, global float* mass, global float* massex, global float* phi // argument order is important
 )+"#endif"+R( // SURFACE
@@ -1501,7 +1501,7 @@ string opencl_c_container() { return R( // ########################## begin of O
 
 
 
-)+R(kernel void stream_collide)+"("+R(global fpxx* fi, global float* rho, global float* u, global uchar* flags, const ulong t, const float fx, const float fy, const float fz // ) { // main LBM kernel
+)+R(kernel void stream_collide)+"("+R(global fpxx* fi, global float* rho, global float* u, global uchar* flags, const ulong t, const float fx, const float fy, const float fz // () { // main LBM kernel//cnd}
 )+"#ifdef FORCE_FIELD"+R(
 	, const global float* F // argument order is important
 )+"#endif"+R( // FORCE_FIELD
@@ -1849,7 +1849,7 @@ string opencl_c_container() { return R( // ########################## begin of O
 } // possible types at the end of surface_3(): TYPE_F / TYPE_I / TYPE_G
 )+"#endif"+R( // SURFACE
 
-)+R(kernel void update_fields)+"("+R(const global fpxx* fi, global float* rho, global float* u, const global uchar* flags, const ulong t, const float fx, const float fy, const float fz // ) { // calculate fields from DDFs
+)+R(kernel void update_fields)+"("+R(const global fpxx* fi, global float* rho, global float* u, const global uchar* flags, const ulong t, const float fx, const float fy, const float fz // ) { // calculate fields from DDFs//cnd}
 )+"#ifdef FORCE_FIELD"+R(
 	, const global float* F // argument order is important
 )+"#endif"+R( // FORCE_FIELD
@@ -1991,7 +1991,7 @@ string opencl_c_container() { return R( // ########################## begin of O
 	return boundary_distance-0.5f<particle_radius ? normalize(boundary_force) : (float3)(0.0f, 0.0f, 0.0f);
 } // particle_boundary_force()
 
-)+R(kernel void integrate_particles)+"("+R(global float* particles, const global float* u, const global uchar* flags, const float time_step_multiplicator // ) {
+)+R(kernel void integrate_particles)+"("+R(global float* particles, const global float* u, const global uchar* flags, const float time_step_multiplicator // () {//cnd}
 )+"#ifdef FORCE_FIELD"+R(
 	, volatile global float* F, const float fx, const float fy, const float fz
 )+"#endif"+R( // FORCE_FIELD
@@ -2211,7 +2211,7 @@ string opencl_c_container() { return R( // ########################## begin of O
 
 
 
-)+R(kernel void voxelize_mesh)+"("+R(const uint direction, global fpxx* fi, const global float* rho, global float* u, global uchar* flags, const ulong t, const uchar flag, const global float* p0, const global float* p1, const global float* p2, const global float* bbu // ) { // voxelize triangle mesh
+)+R(kernel void voxelize_mesh)+"("+R(const uint direction, global fpxx* fi, const global float* rho, global float* u, global uchar* flags, const ulong t, const uchar flag, const global float* p0, const global float* p1, const global float* p2, const global float* bbu // () { // voxelize triangle mesh//cnd}
 )+"#ifdef SURFACE"+R(
 	, global float* mass, global float* massex // argument order is important
 )+"#endif"+R( // SURFACE
@@ -2380,7 +2380,7 @@ string opencl_c_container() { return R( // ########################## begin of O
 } // calculate_j32()
 
 )+"#ifndef FORCE_FIELD"+R( // render flags as grid
-)+R(kernel void graphics_flags(const global float* camera, global int* bitmap, global int* zbuffer, const global uchar* flags) {
+)+R(kernel void graphics_flags(const global float* camera, global int* bitmap, global int* zbuffer, const global uchar* flags) { // }
 )+"#else"+R( // FORCE_FIELD
 )+R(kernel void graphics_flags(const global float* camera, global int* bitmap, global int* zbuffer, const global uchar* flags, const global float* F) {
 )+"#endif"+R( // FORCE_FIELD
@@ -2449,7 +2449,7 @@ string opencl_c_container() { return R( // ########################## begin of O
 }
 
 )+"#ifndef FORCE_FIELD"+R( // render solid boundaries with marching-cubes
-)+R(kernel void graphics_flags_mc(const global float* camera, global int* bitmap, global int* zbuffer, const global uchar* flags) {
+)+R(kernel void graphics_flags_mc(const global float* camera, global int* bitmap, global int* zbuffer, const global uchar* flags) { // }
 )+"#else"+R( // FORCE_FIELD
 )+R(kernel void graphics_flags_mc(const global float* camera, global int* bitmap, global int* zbuffer, const global uchar* flags, const global float* F) {
 )+"#endif"+R( // FORCE_FIELD
@@ -2493,7 +2493,7 @@ string opencl_c_container() { return R( // ########################## begin of O
 }
 
 )+"#ifndef TEMPERATURE"+R(
-)+R(kernel void graphics_field(const global float* camera, global int* bitmap, global int* zbuffer, const int field_mode, const global float* rho, const global float* u, const global uchar* flags) {
+)+R(kernel void graphics_field(const global float* camera, global int* bitmap, global int* zbuffer, const int field_mode, const global float* rho, const global float* u, const global uchar* flags) { // }
 )+"#else"+R( // TEMPERATURE
 )+R(kernel void graphics_field(const global float* camera, global int* bitmap, global int* zbuffer, const int field_mode, const global float* rho, const global float* u, const global uchar* flags, const global float* T) {
 )+"#endif"+R( // TEMPERATURE
@@ -2631,7 +2631,7 @@ string opencl_c_container() { return R( // ########################## begin of O
 }
 
 )+"#ifndef TEMPERATURE"+R(
-)+R(kernel void graphics_field_slice(const global float* camera, global int* bitmap, global int* zbuffer, const int field_mode, const int slice_mode, const int slice_x, const int slice_y, const int slice_z, const global float* rho, const global float* u, const global uchar* flags) {
+)+R(kernel void graphics_field_slice(const global float* camera, global int* bitmap, global int* zbuffer, const int field_mode, const int slice_mode, const int slice_x, const int slice_y, const int slice_z, const global float* rho, const global float* u, const global uchar* flags) { // }
 )+"#else"+R( // TEMPERATURE
 )+R(kernel void graphics_field_slice(const global float* camera, global int* bitmap, global int* zbuffer, const int field_mode, const int slice_mode, const int slice_x, const int slice_y, const int slice_z, const global float* rho, const global float* u, const global uchar* flags, const global float* T) {
 )+"#endif"+R( // TEMPERATURE
@@ -2693,7 +2693,7 @@ string opencl_c_container() { return R( // ########################## begin of O
 }
 
 )+"#ifndef TEMPERATURE"+R(
-)+R(kernel void graphics_streamline(const global float* camera, global int* bitmap, global int* zbuffer, const int field_mode, const int slice_mode, const int slice_x, const int slice_y, const int slice_z, const global float* rho, const global float* u, const global uchar* flags) {
+)+R(kernel void graphics_streamline(const global float* camera, global int* bitmap, global int* zbuffer, const int field_mode, const int slice_mode, const int slice_x, const int slice_y, const int slice_z, const global float* rho, const global float* u, const global uchar* flags) { // }
 )+"#else"+R( // TEMPERATURE
 )+R(kernel void graphics_streamline(const global float* camera, global int* bitmap, global int* zbuffer, const int field_mode, const int slice_mode, const int slice_x, const int slice_y, const int slice_z, const global float* rho, const global float* u, const global uchar* flags, const global float* T) {
 )+"#endif"+R( // TEMPERATURE
@@ -2749,7 +2749,7 @@ string opencl_c_container() { return R( // ########################## begin of O
 }
 
 )+"#ifndef TEMPERATURE"+R(
-)+R(kernel void graphics_q_field(const global float* camera, global int* bitmap, global int* zbuffer, const int field_mode, const global float* rho, const global float* u, const global uchar* flags) {
+)+R(kernel void graphics_q_field(const global float* camera, global int* bitmap, global int* zbuffer, const int field_mode, const global float* rho, const global float* u, const global uchar* flags) { // }
 )+"#else"+R( // TEMPERATURE
 )+R(kernel void graphics_q_field(const global float* camera, global int* bitmap, global int* zbuffer, const int field_mode, const global float* rho, const global float* u, const global uchar* flags, const global float* T) {
 )+"#endif"+R( // TEMPERATURE
@@ -2775,7 +2775,7 @@ string opencl_c_container() { return R( // ########################## begin of O
 	draw_line(p-(0.5f/ul)*un, p+(0.5f/ul)*un, c, camera_cache, bitmap, zbuffer);
 }
 
-)+R(kernel void graphics_q)+"("+R(const global float* camera, global int* bitmap, global int* zbuffer, const int field_mode, const global float* rho, const global float* u // ) {
+)+R(kernel void graphics_q)+"("+R(const global float* camera, global int* bitmap, global int* zbuffer, const int field_mode, const global float* rho, const global float* u // () {//cnd}
 )+"#ifdef SURFACE"+R(
 	, const global uchar* flags // argument order is important
 )+"#endif"+R( // SURFACE

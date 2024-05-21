@@ -9,8 +9,10 @@ Camera camera;
 // reserved keys for graphics: W,A,S,D, I,J,K,L, F, R,U, V,B, C,VK_SPACE, Y,X, N,M
 //bool key_A=false, key_B=false, key_C=false, key_D=false, key_E=false, key_F=false, key_G=false, key_H=false, key_I=false, key_J=false, key_K=false, key_L=false, key_M=false;
 //bool key_N=false, key_O=false, key_P=false, key_Q=false, key_R=false, key_S=false, key_T=false, key_U=false, key_V=false, key_W=false, key_X=false, key_Y=false, key_Z=false;
-bool key_E=false, key_G=false, key_H=false, key_O=false, key_P=false, key_Q=false, key_T=false, key_Z=false;
+bool key_E=false, key_G=false, key_H=false, key_O=false, key_Q=false, key_T=false, key_Z=false;
 bool key_1=false, key_2=false, key_3=false, key_4=false, key_5=false, key_6=false, key_7=false, key_8=false, key_9=false, key_0=false;
+extern bool key_P= false; // !g_args["pause"].as<bool>()
+
 
 const uint light_sources_N = 100u; // maximal number of light sources
 float3 light_sources[light_sources_N]; // coordinates of light sources
@@ -519,13 +521,41 @@ INT WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ PSTR, _In_
 	RegisterClass(&wndClass);
 	MONITORINFO mi = { sizeof(mi) };
 	if(!GetMonitorInfo(MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST), &mi)) return 1;
-	const uint width  = (uint)(mi.rcMonitor.right-mi.rcMonitor.left); // get screen size, initialize variables
-	const uint height = (uint)(mi.rcMonitor.bottom-mi.rcMonitor.top);
+
+	uint width;
+	uint height;
+        if(g_args["window"].as<bool>()) {
+	  width  = GRAPHICS_FRAME_WIDTH;
+	  height = GRAPHICS_FRAME_HEIGHT;
+        } else {
+	  width  = (uint)(mi.rcMonitor.right-mi.rcMonitor.left); // get screen size, initialize variables
+	  height = (uint)(mi.rcMonitor.bottom-mi.rcMonitor.top);
+        }
+
 	ShowCursor(false); // hide cursor
 	SetCursorPos(width/2, height/2);
 	DEVMODE lpDevMode = { 0 }; // get monitor fps
 	const uint fps_limit = (uint)EnumDisplaySettings(0, ENUM_CURRENT_SETTINGS, &lpDevMode)!=0 ? (uint)lpDevMode.dmDisplayFrequency : 60u; // find out screen refresh rate
-	window = CreateWindow("WindowClass", WINDOW_NAME, WS_POPUP|WS_VISIBLE, mi.rcMonitor.left, mi.rcMonitor.top, width, height, 0, 0, hInstance, 0); // create fullscreen window
+
+
+        if(g_args["window"].as<bool>()) {
+	  window = CreateWindow( 	      // cnd
+	    "WindowClass",                    // Window class name
+	    WINDOW_NAME,                      // Window name
+	    WS_OVERLAPPEDWINDOW | WS_VISIBLE, // Window style (overlapped window with borders and title bar)
+	    CW_USEDEFAULT,                    // Initial x position (use default)
+	    CW_USEDEFAULT,                    // Initial y position (use default)
+	    width,                            // Window width
+	    height,                           // Window height
+	    0,                                // Parent window (none)
+	    0,                                // Menu (none)
+	    hInstance,                        // Instance handle
+	    0                                 // Additional application data (none)
+	  );
+        } else {
+	  window = CreateWindow("WindowClass", WINDOW_NAME, WS_POPUP|WS_VISIBLE, mi.rcMonitor.left, mi.rcMonitor.top, width, height, 0, 0, hInstance, 0); // create fullscreen window
+	}
+
 	displayDC = GetDC(window);
 	memDC = CreateCompatibleDC(displayDC);
 	frameDC = CreateCompatibleBitmap(displayDC, width, height); // initialize back buffer

@@ -408,15 +408,15 @@ string LBM_Domain::device_defines() const { return
 	"\n	#define def_T_avg "+to_string(T_avg)+"f" // average temperature
 #endif // TEMPERATURE
 
-#ifdef SUBGRID
-	"\n	#define SUBGRID"
-#endif // SUBGRID
+
+    + (g_args["SUBGRID"].as<bool>() ? "\n     #define SUBGRID" : "") + // cnd - was #ifdef SUBGRID
 
 #ifdef PARTICLES
 	"\n	#define PARTICLES"
 	"\n	#define def_particles_N "+to_string(particles_N)+"ul"
 	"\n	#define def_particles_rho "+to_string(particles_rho)+"f"
 #endif // PARTICLES
+        ""
 ;}
 
 #ifdef GRAPHICS

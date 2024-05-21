@@ -13,6 +13,7 @@ string get_opencl_c_code() {
 	r = replace(r, "#if\n", "#if "); // don't leave any spaces in arguments
 	r = replace(r, "#elif\n", "#elif "); // don't leave any spaces in arguments
 	r = replace(r, "#pragma\n", "#pragma ");
+        //std::cout << r << std::endl; // cnd
 	return "\n"+r;
 }
 

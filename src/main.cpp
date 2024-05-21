@@ -1,6 +1,9 @@
 #include "info.hpp"
 #include "lbm.hpp"
 #include "setup.hpp"
+#include "cxxopts.hpp"
+cxxopts::ParseResult g_args;
+extern bool key_P;
 
 #ifdef GRAPHICS
 void draw_scale(const int field_mode, const int color) {
