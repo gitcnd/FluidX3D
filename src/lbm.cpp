@@ -128,9 +128,9 @@ void LBM_Domain::allocate(Device& device) {
 	}
 //cnd #endif // FORCE_FIELD
 
-#ifdef MOVING_BOUNDARIES
-	kernel_update_moving_boundaries = Kernel(device, N, "update_moving_boundaries", u, flags);
-#endif // MOVING_BOUNDARIES
+//cnd #ifdef MOVING_BOUNDARIES
+	if(g_args["MOVING_BOUNDARIES"].as<bool>()) kernel_update_moving_boundaries = Kernel(device, N, "update_moving_boundaries", u, flags);
+//cnd #endif // MOVING_BOUNDARIES
 
 #ifdef SURFACE
 	phi = Memory<float>(device, N);
@@ -200,11 +200,11 @@ void LBM_Domain::enqueue_calculate_force_on_boundaries() { // calculate forces f
 	kernel_calculate_force_on_boundaries.set_parameters(2u, t).enqueue_run();
 }
 //cnd #endif // FORCE_FIELD
-#ifdef MOVING_BOUNDARIES
+//cnd #ifdef MOVING_BOUNDARIES
 void LBM_Domain::enqueue_update_moving_boundaries() { // mark/unmark cells next to TYPE_S cells with velocity!=0 with TYPE_MS
 	kernel_update_moving_boundaries.enqueue_run();
 }
-#endif // MOVING_BOUNDARIES
+//cnd #endif // MOVING_BOUNDARIES
 //cnd #ifdef PARTICLES
 void LBM_Domain::enqueue_integrate_particles(const uint time_step_multiplicator) { // intgegrate particles forward in time and couple particles to fluid
 //cnd #ifdef FORCE_FIELD
@@ -397,10 +397,12 @@ string LBM_Domain::device_defines() const { return
 */
 
 	  (g_args["VOLUME_FORCE"].as<bool>() ? "\n     #define VOLUME_FORCE" : "") + // cnd - was #ifdef VOLUME_FORCE
-
+	  (g_args["MOVING_BOUNDARIES"].as<bool>() ? "\n     #define MOVING_BOUNDARIES" : "") + // cnd - was #ifdef MOVING_BOUNDARIES
+/*
 #ifdef MOVING_BOUNDARIES
 	"\n	#define MOVING_BOUNDARIES"
 #endif // MOVING_BOUNDARIES
+*/
 
 #ifdef EQUILIBRIUM_BOUNDARIES
 	"\n	#define EQUILIBRIUM_BOUNDARIES"
@@ -842,11 +844,11 @@ void LBM::sanity_checks_initialization() { // sanity checks during initializatio
 	}
 	surface_used = (bool)(flags_used&(TYPE_F|TYPE_I|TYPE_G));
 	temperature_used = (bool)(flags_used&TYPE_T);
-#ifndef MOVING_BOUNDARIES
-	if(moving_boundaries_used) print_warning("Some boundary cells have non-zero velocity, but MOVING_BOUNDARIES is not enabled. If you intend to use moving boundaries, uncomment \"#define MOVING_BOUNDARIES\" in defines.hpp.");
-#else // MOVING_BOUNDARIES
-	if(!moving_boundaries_used) print_warning("The MOVING_BOUNDARIES extension is enabled but no moving boundary cells (TYPE_S flag and velocity unequal to zero) are placed in the simulation box. You may disable the extension by commenting out \"#define MOVING_BOUNDARIES\" in defines.hpp.");
-#endif // MOVING_BOUNDARIES
+//cnd #ifndef MOVING_BOUNDARIES
+	if(!g_args["MOVING_BOUNDARIES"].as<bool>() && moving_boundaries_used) print_warning("Some boundary cells have non-zero velocity, but MOVING_BOUNDARIES is not enabled. If you intend to use moving boundaries, uncomment \"#define MOVING_BOUNDARIES\" in defines.hpp.");
+//cnd #else // MOVING_BOUNDARIES
+	if(g_args["MOVING_BOUNDARIES"].as<bool>() && !moving_boundaries_used) print_warning("The MOVING_BOUNDARIES extension is enabled but no moving boundary cells (TYPE_S flag and velocity unequal to zero) are placed in the simulation box. You may disable the extension by commenting out \"#define MOVING_BOUNDARIES\" in defines.hpp.");
+//cnd #endif // MOVING_BOUNDARIES
 #ifndef EQUILIBRIUM_BOUNDARIES
 	if(equilibrium_boundaries_used) print_error("Some cells are set as equilibrium boundaries with the TYPE_E flag, but EQUILIBRIUM_BOUNDARIES is not enabled. Uncomment \"#define EQUILIBRIUM_BOUNDARIES\" in defines.hpp.");
 #else // EQUILIBRIUM_BOUNDARIES
@@ -1023,7 +1025,7 @@ float3 LBM::calculate_torque_on_object(const float3& rotation_center, const ucha
 }
 //cnd #endif // FORCE_FIELD
 
-#ifdef MOVING_BOUNDARIES
+//cnd #ifdef MOVING_BOUNDARIES
 void LBM::update_moving_boundaries() { // mark/unmark cells next to TYPE_S cells with velocity!=0 with TYPE_MS
 	for(uint d=0u; d<get_D(); d++) lbm_domain[d]->enqueue_update_moving_boundaries();
 	communicate_flags();
@@ -1032,7 +1034,7 @@ void LBM::update_moving_boundaries() { // mark/unmark cells next to TYPE_S cells
 	camera.key_update = true; // to prevent flickering of flags in interactive graphics when camera is not moved
 #endif // GRAPHICS
 }
-#endif // MOVING_BOUNDARIES
+//cnd #endif // MOVING_BOUNDARIES
 
 //cnd PARTICLES! #if defined(PARTICLES)&&!defined(FORCE_FIELD)
 void LBM::integrate_particles(const ulong steps, const uint time_step_multiplicator) { // intgegrate passive tracer particles forward in time in stationary flow field
@@ -1088,9 +1090,9 @@ void LBM::voxelize_mesh_on_device(const Mesh* mesh, const uchar flag, const floa
 			lbm_domain[d]->voxelize_mesh_on_device(mesh, flag, rotation_center, linear_velocity, rotational_velocity);
 		});
 	}
-#ifdef MOVING_BOUNDARIES
-	if(flag==TYPE_S&&(length(linear_velocity)>0.0f||length(rotational_velocity)>0.0f)) update_moving_boundaries();
-#endif // MOVING_BOUNDARIES
+//cnd #ifdef MOVING_BOUNDARIES
+	if(g_args["MOVING_BOUNDARIES"].as<bool>() && flag==TYPE_S&&(length(linear_velocity)>0.0f||length(rotational_velocity)>0.0f)) update_moving_boundaries();
+//cnd #endif // MOVING_BOUNDARIES
 	if(!initialized) {
 		flags.read_from_device();
 		u.read_from_device();

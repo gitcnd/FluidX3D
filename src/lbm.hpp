@@ -41,9 +41,9 @@ private:
 	Kernel kernel_calculate_force_on_boundaries; // calculate forces from fluid on TYPE_S cells
 	Kernel kernel_reset_force_field; // reset force field (also on TYPE_S cells)
 //cnd #endif // FORCE_FIELD
-#ifdef MOVING_BOUNDARIES
+//cnd #ifdef MOVING_BOUNDARIES
 	Kernel kernel_update_moving_boundaries; // mark/unmark cells next to TYPE_S cells with velocity!=0 with TYPE_MS
-#endif // MOVING_BOUNDARIES
+//cnd #endif // MOVING_BOUNDARIES
 #ifdef SURFACE
 	Kernel kernel_surface_0; // additional kernel for computing mass conservation and mass flux computation
 	Kernel kernel_surface_1; // additional kernel for flag handling
@@ -100,9 +100,9 @@ public:
 //cnd #ifdef FORCE_FIELD
 	void enqueue_calculate_force_on_boundaries(); // calculate forces from fluid on TYPE_S cells
 //cnd #endif // FORCE_FIELD
-#ifdef MOVING_BOUNDARIES
+//cnd #ifdef MOVING_BOUNDARIES
 	void enqueue_update_moving_boundaries(); // mark/unmark cells next to TYPE_S cells with velocity!=0 with TYPE_MS
-#endif // MOVING_BOUNDARIES
+//cnd #endif // MOVING_BOUNDARIES
 //cnd #ifdef PARTICLES
 	void enqueue_integrate_particles(const uint time_step_multiplicator=1u); // intgegrates particles forward in time and couples particles to fluid
 //cnd #endif // PARTICLES
@@ -422,9 +422,9 @@ public:
 	float3 calculate_force_on_object(const uchar flag_marker=TYPE_S); // add up force for all cells flagged with flag_marker
 	float3 calculate_torque_on_object(const float3& rotation_center, const uchar flag_marker=TYPE_S); // add up torque around specified rotation_center for all cells flagged with flag_marker
 //cnd #endif // FORCE_FIELD
-#ifdef MOVING_BOUNDARIES
+//cnd #ifdef MOVING_BOUNDARIES
 	void update_moving_boundaries(); // mark/unmark cells next to TYPE_S cells with velocity!=0 with TYPE_MS
-#endif // MOVING_BOUNDARIES
+//cnd #endif // MOVING_BOUNDARIES
 //cnd PARTICLES!  #if defined(PARTICLES)&&!defined(FORCE_FIELD)
 	void integrate_particles(const ulong steps=max_ulong, const uint time_step_multiplicator=1u); // intgegrate passive tracer particles forward in time in stationary flow field
 //cnd PARTICLES! #endif // PARTICLES&&!FORCE_FIELD
