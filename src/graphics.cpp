@@ -1,4 +1,6 @@
 #include "graphics.hpp"
+#include "info.hpp"
+
 
 vector<string> main_arguments = vector<string>(); // console arguments
 std::atomic_bool running = true;
@@ -6,12 +8,15 @@ std::atomic_bool running = true;
 #ifdef GRAPHICS
 Camera camera;
 
+
+// unused?     G H               P       T           Z
 // reserved keys for graphics: W,A,S,D, I,J,K,L, F, R,U, V,B, C,VK_SPACE, Y,X, N,M
 //bool key_A=false, key_B=false, key_C=false, key_D=false, key_E=false, key_F=false, key_G=false, key_H=false, key_I=false, key_J=false, key_K=false, key_L=false, key_M=false;
 //bool key_N=false, key_O=false, key_P=false, key_Q=false, key_R=false, key_S=false, key_T=false, key_U=false, key_V=false, key_W=false, key_X=false, key_Y=false, key_Z=false;
 bool key_E=false, key_G=false, key_H=false, key_O=false, key_Q=false, key_T=false, key_Z=false;
 bool key_1=false, key_2=false, key_3=false, key_4=false, key_5=false, key_6=false, key_7=false, key_8=false, key_9=false, key_0=false;
 extern bool key_P= false; // !g_args["pause"].as<bool>()
+//extern bool key_O= false; // !g_args["pause"].as<bool>()
 
 
 const uint light_sources_N = 100u; // maximal number of light sources
@@ -512,6 +517,7 @@ LRESULT CALLBACK WndProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam
 }
 #ifdef GRAPHICS_CONSOLE
 int main(int argc, char* argv[]) { // call WinMain from dummy main function in order to have an additional console window
+	info.print_logo();
 	main_arguments = get_main_arguments(argc, argv);
 	return WinMain(GetModuleHandle(0), 0, GetCommandLineA(), SW_SHOWMINIMIZED);
 }
@@ -522,11 +528,20 @@ INT WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ PSTR, _In_
 	MONITORINFO mi = { sizeof(mi) };
 	if(!GetMonitorInfo(MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST), &mi)) return 1;
 
-	uint width;
-	uint height;
+	uint width,wadd=16;
+	uint height,hadd=39;
+        DWORD style = WS_OVERLAPPEDWINDOW | WS_VISIBLE; // Define the window style
         if(g_args["window"].as<bool>()) {
 	  width  = GRAPHICS_FRAME_WIDTH;
 	  height = GRAPHICS_FRAME_HEIGHT;
+#if defined(_WIN32)
+	  // Make the window large enough so the full graphics output fits into it:-
+	  DWORD exStyle = 0; // Extended window style (none)
+	  RECT rect = {0, 0, width, height}; // Create a RECT structure with the desired client area size
+	  if (AdjustWindowRectEx(&rect, style, FALSE, exStyle)) { // Adjust the window rectangle to account for window styles
+	    wadd = (rect.right - rect.left) - width; hadd = (rect.bottom - rect.top) - height;
+	  }
+#endif
         } else {
 	  width  = (uint)(mi.rcMonitor.right-mi.rcMonitor.left); // get screen size, initialize variables
 	  height = (uint)(mi.rcMonitor.bottom-mi.rcMonitor.top);
@@ -537,16 +552,15 @@ INT WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE, _In_ PSTR, _In_
 	DEVMODE lpDevMode = { 0 }; // get monitor fps
 	const uint fps_limit = (uint)EnumDisplaySettings(0, ENUM_CURRENT_SETTINGS, &lpDevMode)!=0 ? (uint)lpDevMode.dmDisplayFrequency : 60u; // find out screen refresh rate
 
-
-        if(g_args["window"].as<bool>()) {
+        if(g_args["window"].as<bool>()) {     // ["w"] run in window instead of full screen
 	  window = CreateWindow( 	      // cnd
 	    "WindowClass",                    // Window class name
 	    WINDOW_NAME,                      // Window name
-	    WS_OVERLAPPEDWINDOW | WS_VISIBLE, // Window style (overlapped window with borders and title bar)
+	    style, // Window style (overlapped window with borders and title bar)	WS_OVERLAPPEDWINDOW | WS_VISIBLE
 	    CW_USEDEFAULT,                    // Initial x position (use default)
 	    CW_USEDEFAULT,                    // Initial y position (use default)
-	    width,                            // Window width
-	    height,                           // Window height
+	    width+wadd,                       // Window width
+	    height+hadd,                      // Window height
 	    0,                                // Parent window (none)
 	    0,                                // Menu (none)
 	    hInstance,                        // Instance handle
@@ -704,6 +718,7 @@ void input_detection() {
 	}
 }
 int main(int argc, char* argv[]) {
+	info.print_logo();
 	main_arguments = get_main_arguments(argc, argv);
 
 	XInitThreads();
@@ -793,6 +808,7 @@ void input_detection() {
 	}
 }
 int main(int argc, char* argv[]) {
+	info.print_logo();
 	main_arguments = get_main_arguments(argc, argv);
 	camera = Camera(384u, 216u, 60u); // width and height must be divisible by 8
 	thread compute_thread(main_physics); // start main_physics() in a new thread
@@ -820,6 +836,7 @@ int main(int argc, char* argv[]) {
 #if !defined(INTERACTIVE_GRAPHICS) && !defined(INTERACTIVE_GRAPHICS_ASCII)
 
 int main(int argc, char* argv[]) {
+	info.print_logo();
 	main_arguments = get_main_arguments(argc, argv);
 	camera = Camera(GRAPHICS_FRAME_WIDTH, GRAPHICS_FRAME_HEIGHT, 60u); // width and height must be divisible by 8
 	thread compute_thread(main_physics); // start main_physics() in a new thread
