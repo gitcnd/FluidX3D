@@ -57,8 +57,8 @@
 	D3Q19
 	D3Q27
 
-	SRT
-	TRT
+      *	SRT							Done
+      *	TRT							Done
 
       * VOLUME_FORCE						Done
 	TEMPERATURE (req: VOLUME_FORCE)

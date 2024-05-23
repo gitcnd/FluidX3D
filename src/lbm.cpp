@@ -337,11 +337,16 @@ string LBM_Domain::device_defines() const { return
 	"\n	#define def_wc (1.0f/216.0f)" // corner (19-26)
 #endif // D3Q27
 
+        + (g_args["SRT"].as<bool>() ? "\n     #define SRT" :    // cnd - was #if defined(SRT)
+           g_args["TRT"].as<bool>() ? "\n     #define TRT" : "") + // cnd - was #if defined(SRT)
+
+/*
 #if defined(SRT)
 	"\n	#define SRT"
 #elif defined(TRT)
 	"\n	#define TRT"
 #endif // TRT
+*/
 
 	"\n	#define TYPE_S 0x01" // 0b00000001 // (stationary or moving) solid boundary
 	"\n	#define TYPE_E 0x02" // 0b00000010 // equilibrium boundary (inflow/outflow)
@@ -720,11 +725,17 @@ void LBM::sanity_checks_constructor(const vector<Device_Info>& device_infos, con
 #ifdef D2Q9
 	if(Nz!=1u) print_error("D2Q9 is the 2D velocity set. You have to set Nz=1u in the LBM constructor! Currently you have set Nz="+to_string(Nz)+"u.");
 #endif // D2Q9
+
+	if(!g_args["SRT"].as<bool>() && !g_args["TRT"].as<bool>()) print_error("No LBM collision operator selected. Uncomment either \"#define SRT\" or \"#define TRT\" in defines.hpp");
+	else if(g_args["SRT"].as<bool>() && g_args["TRT"].as<bool>()) print_error("Too many LBM collision operators selected. Comment out either \"#define SRT\" or \"#define TRT\" in defines.hpp");
+
+/*
 #if !defined(SRT)&&!defined(TRT)
 	print_error("No LBM collision operator selected. Uncomment either \"#define SRT\" or \"#define TRT\" in defines.hpp");
 #elif defined(SRT)&&defined(TRT)
 	print_error("Too many LBM collision operators selected. Comment out either \"#define SRT\" or \"#define TRT\" in defines.hpp");
 #endif // SRT && TRT
+*/
 
 //cnd #ifndef VOLUME_FORCE
 	if(!g_args["VOLUME_FORCE"].as<bool>()) {

@@ -5,11 +5,17 @@ Info info;
 
 void Info::initialize(LBM* lbm) {
 	this->lbm = lbm;
+
+	if(g_args["SRT"].as<bool>()) collision = "SRT"; // cnd
+	else if(g_args["TRT"].as<bool>())collision = "TRT";
+/*
 #if defined(SRT)
 	collision = "SRT";
 #elif defined(TRT)
 	collision = "TRT";
 #endif // TRT
+*/
+
 #if defined(FP16S)
 	collision += " (FP32/FP16S)";
 #elif defined(FP16C)
