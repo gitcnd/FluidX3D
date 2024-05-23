@@ -58,6 +58,7 @@ typedef uint64_t ulong;
 
 #include "cxxopts.hpp"
 extern cxxopts::ParseResult g_args;
+//extern Info info; // declared in info.cpp
 extern bool key_P;
 
 
@@ -2671,15 +2672,24 @@ inline vector<string> get_main_arguments(int argc, char* argv[]) {
 
     options.add_options()
         ("h,help", "Print help")
-        ("x", "X proportion factor", cxxopts::value<float>()->default_value("1.0"))
-        ("y", "Y proportion factor", cxxopts::value<float>()->default_value("1.0"))
-        ("z", "Z proportion factor", cxxopts::value<float>()->default_value("1.0"))
+        ("f,file", "input .stl mesh Filename", cxxopts::value<std::string>()->default_value("input.stl"))
+        ("rotx", "X deg rotation of input mesh", cxxopts::value<float>()->default_value("0.0"))
+        ("roty", "Y deg rotation of input mesh", cxxopts::value<float>()->default_value("0.0"))
+        ("rotz", "Z deg rotation of input mesh", cxxopts::value<float>()->default_value("0.0"))
+
+        ("trx", "X translate input mesh", cxxopts::value<float>()->default_value("0.0"))
+        ("try", "Y translate input mesh", cxxopts::value<float>()->default_value("0.0"))
+        ("trz", "Z translate input mesh", cxxopts::value<float>()->default_value("0.0"))
+
+        ("x", "X width of sim box", cxxopts::value<float>()->default_value("1.0"))
+        ("y", "Y length of sim box", cxxopts::value<float>()->default_value("1.0"))
+        ("z", "Z height of sim box", cxxopts::value<float>()->default_value("1.0"))
         ("r,resolution", "Resolution", cxxopts::value<unsigned int>()->default_value("4096"))
         ("re", "Reynolds number", cxxopts::value<float>()->default_value("100000.0"))
-        ("u", "Velocity", cxxopts::value<float>()->default_value("0.1"))
+        ("u", "Velocity in m/s", cxxopts::value<float>()->default_value("5.0"))
+        ("c,cord", "Cord (length of STL) in meters", cxxopts::value<float>()->default_value("1.0"))
         ("t,time", "Time", cxxopts::value<unsigned int>()->default_value("10000"))
         ("scale", "Scale", cxxopts::value<float>()->default_value("0.9"))
-        ("f,file", "Filename", cxxopts::value<std::string>()->default_value("input.stl"))
         ("a,aoa", "Angle of attack", cxxopts::value<float>()->default_value("-5.0"))
         ("camx", "Camera X", cxxopts::value<float>()->default_value("19.0"))
         ("camy", "Camera Y", cxxopts::value<float>()->default_value("19.1"))
@@ -2692,11 +2702,16 @@ inline vector<string> get_main_arguments(int argc, char* argv[]) {
         ("w,window", "Enable window instead of fullscreen mode", cxxopts::value<bool>()->default_value("false"))
         ("wait", "Wait for keypress befor ending", cxxopts::value<bool>()->default_value("false"))
         ("pause", "Do not auto-start the simulation", cxxopts::value<bool>()->default_value("false"))
+        ("fps", "Frames per Second for video output", cxxopts::value<float>()->default_value("25.0"))
 
         ("SUBGRID", "Use SUBGRID #define", cxxopts::value<bool>()->default_value("false"))
+        ("VOLUME_FORCE", "Use VOLUME_FORCE #define", cxxopts::value<bool>()->default_value("false"))
+        ("floor", "Insert a solid floor", cxxopts::value<bool>()->default_value("false"))
+        ("allowsleep", "Do not prevent PC from sleeping", cxxopts::value<bool>()->default_value("false"))
 
         ("d,display", "Display", cxxopts::value<std::string>()->default_value("0,1"));
 
+//    try {
     //auto result = options.parse(argc, argv);
 #if defined(_WIN32)
      g_args = options.parse(new_argv.size(), new_argv.data());
@@ -2705,11 +2720,39 @@ inline vector<string> get_main_arguments(int argc, char* argv[]) {
 #endif
 
     if (g_args.count("help")) {
+	//info.print_logo();
         std::cout << options.help() << std::endl;
         exit(0);
     }
 
     if (!g_args["pause"].as<bool>()) key_P= true;
+
+/*
+        if (g_args.count("file")) {
+            std::string filename = g_args["file"].as<std::string>();
+            std::cout << "File: " << filename << std::endl;
+        }
+
+    } catch (const cxxopts::OptionException& e) {
+        std::cerr << "Error parsing options: " << e.what() << std::endl;
+        std::cerr << options.help() << std::endl;
+        exit(1);
+    }
+
+*/
+
+
+/*
+    } catch (const cxxopts::exceptions& e) {
+        std::cerr << "Error parsing options: " << e.what() << std::endl;
+        std::cerr << options.help() << std::endl;
+        exit(1);
+    } catch (const std::exception& e) {
+        std::cerr << "Unexpected error: " << e.what() << std::endl;
+        exit(1);
+    }
+*/
+
 
     /*
 
