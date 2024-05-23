@@ -4,6 +4,7 @@
 #include "cxxopts.hpp"
 cxxopts::ParseResult g_args;
 extern bool key_P;
+extern bool key_O;
 
 #ifdef GRAPHICS
 void draw_scale(const int field_mode, const int color) {
@@ -124,6 +125,7 @@ void main_label(const double frametime) {
 			draw_label(ox, oy+i, "7 ("+mode_7+"): particles", c); i+=2*FONT_HEIGHT;
 			draw_label(ox, oy+i, "T: ("+slice+"): toggle slice visualization mode", c); i+=FONT_HEIGHT;
 			draw_label(ox, oy+i, "Z: ("+field+"): toggle field visualization mode", c); i+=FONT_HEIGHT;
+			draw_label(ox, oy+i, "O: write frame to disk file", c); i+=FONT_HEIGHT;
 			draw_label(ox, oy+i, "Q/E: move slice in slice visualization mode", c); i+=2*FONT_HEIGHT;
 			draw_label(ox, oy+i, "Mouse or I/J/K/L (rx="+alignr(4u, to_int(fmod(degrees(camera.rx)+90.0+360.0, 360.0)-180.0))+", ry="+alignr(3u, to_int(180.0-degrees(camera.ry)))+"): rotate camera", c); i+=FONT_HEIGHT;
 			draw_label(ox, oy+i, "Scrollwheel or +/- ("+to_string(camera.free ? (float)camera.free_camera_velocity : camera.zoom*(float)fmax(fmax(info.lbm->get_Nx(), info.lbm->get_Ny()), info.lbm->get_Nz())/(float)min(camera.width, camera.height), 3u)+"): zoom (centered camera mode) or camera movement speed in cells/s (free camera mode)", c); i+=FONT_HEIGHT;
@@ -147,7 +149,7 @@ void main_graphics() {
 #endif // GRAPHICS
 
 void main_physics() {
-	info.print_logo();
+	//info.print_logo(); moved to graphics.cpp/setup.cpp
 	main_setup(); // execute setup
 	running = false;
 	exit(0); // make sure that the program stops

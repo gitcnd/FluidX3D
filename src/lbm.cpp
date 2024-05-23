@@ -380,9 +380,7 @@ string LBM_Domain::device_defines() const { return
 	"\n	#define UPDATE_FIELDS"
 #endif // UPDATE_FIELDS
 
-#ifdef VOLUME_FORCE
-	"\n	#define VOLUME_FORCE"
-#endif // VOLUME_FORCE
+	+ (g_args["VOLUME_FORCE"].as<bool>() ? "\n     #define VOLUME_FORCE" : "") + // cnd - was #ifdef VOLUME_FORCE
 
 #ifdef MOVING_BOUNDARIES
 	"\n	#define MOVING_BOUNDARIES"
@@ -727,13 +725,18 @@ void LBM::sanity_checks_constructor(const vector<Device_Info>& device_infos, con
 #elif defined(SRT)&&defined(TRT)
 	print_error("Too many LBM collision operators selected. Comment out either \"#define SRT\" or \"#define TRT\" in defines.hpp");
 #endif // SRT && TRT
-#ifndef VOLUME_FORCE
-	if(fx!=0.0f||fy!=0.0f||fz!=0.0f) print_error("Volume force is set in LBM constructor in main_setup(), but VOLUME_FORCE is not enabled. Uncomment \"#define VOLUME_FORCE\" in defines.hpp.");
-#else // VOLUME_FORCE
+
+//cnd #ifndef VOLUME_FORCE
+	if(!g_args["VOLUME_FORCE"].as<bool>()) {
+	  if(fx!=0.0f||fy!=0.0f||fz!=0.0f) print_error("Volume force is set in LBM constructor in main_setup(), but VOLUME_FORCE is not enabled. Uncomment \"#define VOLUME_FORCE\" in defines.hpp.");
+	} else {
+//cnd #else // VOLUME_FORCE
 #ifndef FORCE_FIELD
 	if(fx==0.0f&&fy==0.0f&&fz==0.0f) print_warning("The VOLUME_FORCE extension is enabled but the volume force in LBM constructor is set to zero. You may disable the extension by commenting out \"#define VOLUME_FORCE\" in defines.hpp.");
 #endif // FORCE_FIELD
-#endif // VOLUME_FORCE
+	}
+//cnd #endif // VOLUME_FORCE
+
 #ifndef SURFACE
 	if(sigma!=0.0f) print_error("Surface tension is set in LBM constructor in main_setup(), but SURFACE is not enabled. Uncomment \"#define SURFACE\" in defines.hpp.");
 #endif // SURFACE
@@ -745,9 +748,13 @@ void LBM::sanity_checks_constructor(const vector<Device_Info>& device_infos, con
 #ifdef PARTICLES
 	if(particles_N==0u) print_error("The PARTICLES extension is enabled but the number of particles is set to 0. Comment out \"#define PARTICLES\" in defines.hpp.");
 	if(get_D()>1u) print_error("The PARTICLES extension is not supported in multi-GPU mode.");
-#if !defined(VOLUME_FORCE)||!defined(FORCE_FIELD)
+
+//cnd #if !defined(VOLUME_FORCE)||!defined(FORCE_FIELD)
+	if((!g_args["VOLUME_FORCE"].as<bool>()) && (particles_rho!=1.0f)) print_error("Particle density is set unequal to 1, but particle-fluid 2-way-coupling is not enabled. Uncomment both \"#define VOLUME_FORCE\" and \"#define FORCE_FIELD\" in defines.hpp.");
+#if !defined(FORCE_FIELD)
 	if(particles_rho!=1.0f) print_error("Particle density is set unequal to 1, but particle-fluid 2-way-coupling is not enabled. Uncomment both \"#define VOLUME_FORCE\" and \"#define FORCE_FIELD\" in defines.hpp.");
 #endif // !VOLUME_FORCE||!FORCE_FIELD
+
 #ifdef FORCE_FIELD
 	if(particles_rho==1.0f) print_warning("Particle density is set to 1, so particles behave as passive tracers without acting a force on the fluid, but particle-fluid 2-way-coupling is enabled. You may comment out \"#define FORCE_FIELD\" in defines.hpp.");
 #endif // FORCE_FIELD
@@ -994,9 +1001,9 @@ void LBM::write_status(const string& path) { // write LBM status report to a .tx
 	status += "Kinematic Viscosity = "+to_string(get_nu())+"\n";
 	status += "Relaxation Time = "+to_string(get_tau())+"\n";
 	status += "Maximum Reynolds Number = "+to_string(get_Re_max())+"\n";
-#ifdef VOLUME_FORCE
-	status += "Volume Force = ("+to_string(get_fx())+", "+to_string(get_fy())+", "+to_string(get_fz())+")\n";
-#endif // VOLUME_FORCE
+//cnd #ifdef VOLUME_FORCE
+	if(g_args["VOLUME_FORCE"].as<bool>()) status += "Volume Force = ("+to_string(get_fx())+", "+to_string(get_fy())+", "+to_string(get_fz())+")\n";
+//cnd #endif // VOLUME_FORCE
 #ifdef SURFACE
 	status += "Surface Tension Coefficient = "+to_string(get_sigma())+"\n";
 #endif // SURFACE
@@ -1195,7 +1202,7 @@ void LBM::Graphics::write_frame(const string& path, const string& name, const st
 	write_frame(0u, 0u, camera.width, camera.height, path, name, extension, print_preview);
 }
 void LBM::Graphics::write_frame(const uint x1, const uint y1, const uint x2, const uint y2, const string& path, const string& name, const string& extension, bool print_preview) { // save a cropped current frame with two corner points (x1,y1) and (x2,y2)
-	info.allow_rendering = false; // temporarily disable interactive rendering
+	//cnd - let them print the decorations and scales if they want to: 	info.allow_rendering = false; // temporarily disable interactive rendering
 	int* image_data = draw_frame(); // make sure the frame is fully rendered
 	const string filename = default_filename(path, name, extension, lbm->get_t());
 	const uint xa=max(min(x1, x2), 0u), xb=min(max(x1, x2), camera.width ); // sort coordinates if necessary
@@ -1208,6 +1215,8 @@ void LBM::Graphics::write_frame(const uint x1, const uint y1, const uint x2, con
 		print_image(image);
 		print_info("Image \""+filename+"\" saved.");
 	}
+#else
+	print_info("Image \""+filename+"\" saved.");
 #endif // INTERACTIVE_GRAPHICS_ASCII
 	running_encoders++;
 	thread encoder(encode_image, image, filename, extension, &running_encoders); // the main bottleneck in rendering images to the hard disk is .png encoding, so encode image in new thread

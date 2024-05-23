@@ -5,7 +5,7 @@
 #define USE_FXFILE // get stl filename from %FXFILE% env var (or -f switch)
 
 #ifndef BENCHMARK
-#define DEMO_CONCORDE
+//#define DEMO_CONCORDE
 //#define DEMO_3D_TAYLOR_GREEN_VORTICES
 //#define DEMO_NASA_COMMON_RESEARCH_MODEL
 //#define DEMO_2D_TAYLOR-GREEN_VORTICES //cnd
@@ -25,6 +25,9 @@
 //#define DEMO_RADIAL_FAN //cnd
 //#define DEMO_ELECTRIC_DUCTED_FAN //cnd
 //#define DEMO_AERODYNAMIC_COW //cnd
+#define DEMO_CND_WING
+//#define DEMO_AERODYNAMIC_COW_TEST
+//#define DEMO_AERODYNAMIC_COW
 //#define DEMO_SPACE_SHUTTLE //cnd
 //#define DEMO_STARSHIP //cnd
 //#define DEMO_AHMED_BODY //cnd
@@ -44,6 +47,37 @@
 //#define DEMO_RAYLEIGH_BENARD_CONVECTION //cnd
 //#define DEMO_THERMAL_CONVECTION //cnd
 
+/*
+	FP16S
+	FP16C
+	fpxx   (FP16S|FP16C) ? ushort : float
+
+	D2Q9
+	D3Q15
+	D3Q19
+	D3Q27
+
+	SRT
+	TRT
+
+      * VOLUME_FORCE						Done
+	TEMPERATURE (req: VOLUME_FORCE)
+	FORCE_FIELD
+	EQUILIBRIUM_BOUNDARIES
+	MOVING_BOUNDARIES
+	SURFACE (req: UPDATE_FIELDS)
+      *	SUBGRID							Done
+	PARTICLES (req: UPDATE_FIELDS)
+
+	GRAPHICS
+	INTERACTIVE_GRAPHICS_ASCII (req: GRAPHICS)
+	INTERACTIVE_GRAPHICS (req: GRAPHICS)
+
+	GRAPHICS_*
+	TYPE_* ?
+	VIS_*
+
+*/
 
 #endif // BENCHMARK   || defined()
 
@@ -59,7 +93,7 @@
 #define SRT // choose single-relaxation-time LBM collision operator; (default)
 //#define TRT // choose two-relaxation-time LBM collision operator
 
-#if defined(DEMO_CONCORDE) || defined(DEMO_BOEING_747) || defined(DEMO_CND_GLIDER) || defined(DEMO_DELTA_WING) || defined(DEMO_RADIAL_FAN) || defined(DEMO_ELECTRIC_DUCTED_FAN) || defined(DEMO_SPACE_SHUTTLE) || defined(DEMO_CESSNA_172) || defined(DEMO_AERODYNAMIC_COW) || defined(DEMO_DAM_BREAK)
+#if defined(DEMO_CONCORDE) || defined(DEMO_BOEING_747) || defined(DEMO_CND_GLIDER) || defined(DEMO_DELTA_WING) || defined(DEMO_RADIAL_FAN) || defined(DEMO_ELECTRIC_DUCTED_FAN) || defined(DEMO_SPACE_SHUTTLE) || defined(DEMO_CESSNA_172) || defined(DEMO_AERODYNAMIC_COW) || defined(DEMO_DAM_BREAK) || defined(DEMO_CND_WING)
 #define FP16S // compress LBM DDFs to range-shifted IEEE-754 FP16; number conversion is done in hardware; all arithmetic is still done in FP32
 #endif
 #if defined(DEMO_NASA_COMMON_RESEARCH_MODEL) || defined(DEMO_RAINDROP_IMPACT)
@@ -72,7 +106,7 @@
 #if defined(DEMO_STOKES_DRAG) || defined(DEMO_PARTICLE_TEST)
 #define FORCE_FIELD // enables computing the forces on solid boundaries with lbm.calculate_force_on_boundaries(); and enables setting the force for each lattice point independently (enable VOLUME_FORCE too); allocates an extra 12 Bytes/cell
 #endif
-#if defined(DEMO_CONCORDE) || defined(DEMO_NASA_COMMON_RESEARCH_MODEL) || defined(DEMO_BOEING_747) || defined(DEMO_CND_GLIDER) || defined(DEMO_STOKES_DRAG) || defined(DEMO_DELTA_WING) || defined(DEMO_ELECTRIC_DUCTED_FAN) || defined(DEMO_SPACE_SHUTTLE) || defined(DEMO_RAINDROP_IMPACT) || defined(DEMO_CESSNA_172) || defined(DEMO_AERODYNAMIC_COW)
+#if defined(DEMO_CONCORDE) || defined(DEMO_NASA_COMMON_RESEARCH_MODEL) || defined(DEMO_BOEING_747) || defined(DEMO_CND_GLIDER) || defined(DEMO_STOKES_DRAG) || defined(DEMO_DELTA_WING) || defined(DEMO_ELECTRIC_DUCTED_FAN) || defined(DEMO_SPACE_SHUTTLE) || defined(DEMO_RAINDROP_IMPACT) || defined(DEMO_CESSNA_172) || defined(DEMO_AERODYNAMIC_COW) || defined(DEMO_CND_WING)
 #define EQUILIBRIUM_BOUNDARIES // enables fixing the velocity/density by marking cells with TYPE_E; can be used for inflow/outflow; does not reflect shock waves
 #endif
 #if defined(DEMO_PARTICLE_TEST) || defined(DEMO_RADIAL_FAN) || defined(DEMO_ELECTRIC_DUCTED_FAN) || defined(DEMO_CESSNA_172)
@@ -82,7 +116,7 @@
 #define SURFACE // enables free surface LBM: mark fluid cells with TYPE_F; at initialization the TYPE_I interface and TYPE_G gas domains will automatically be completed; allocates an extra 12 Bytes/cell
 #endif
 //#define TEMPERATURE // enables temperature extension; set fixed-temperature cells with TYPE_T (similar to EQUILIBRIUM_BOUNDARIES); allocates an extra 32 (FP32) or 18 (FP16) Bytes/cell
-#if defined(DEMO_CONCORDE) || defined(DEMO_NASA_COMMON_RESEARCH_MODEL) || defined(DEMO_BOEING_747) || defined(DEMO_CND_GLIDER) || defined(DEMO_DELTA_WING) || defined(DEMO_RADIAL_FAN) || defined(DEMO_ELECTRIC_DUCTED_FAN) || defined(DEMO_SPACE_SHUTTLE) || defined(DEMO_CESSNA_172) || defined(DEMO_AERODYNAMIC_COW)
+#if defined(DEMO_CONCORDE) || defined(DEMO_NASA_COMMON_RESEARCH_MODEL) || defined(DEMO_BOEING_747) || defined(DEMO_CND_GLIDER) || defined(DEMO_DELTA_WING) || defined(DEMO_RADIAL_FAN) || defined(DEMO_ELECTRIC_DUCTED_FAN) || defined(DEMO_SPACE_SHUTTLE) || defined(DEMO_CESSNA_172) || defined(DEMO_AERODYNAMIC_COW) || defined(DEMO_CND_WING)
 #define SUBGRID // enables Smagorinsky-Lilly subgrid turbulence LES model to keep simulations with very large Reynolds number stable
 #endif
 #if defined(DEMO_PARTICLE_TEST)
@@ -95,7 +129,7 @@
 
 #ifndef GRAPHICS
 #ifndef INTERACTIVE_GRAPHICS_ASCII
-#if defined(DEMO_CONCORDE) || defined(DEMO_3D_TAYLOR_GREEN_VORTICES) || defined(DEMO_NASA_COMMON_RESEARCH_MODEL) || defined(DEMO_BOEING_747) || defined(DEMO_CND_GLIDER) || defined(DEMO_PARTICLE_TEST) || defined(DEMO_DELTA_WING) || defined(DEMO_RADIAL_FAN) || defined(DEMO_ELECTRIC_DUCTED_FAN) || defined(DEMO_SPACE_SHUTTLE) || defined(DEMO_RAINDROP_IMPACT) || defined(DEMO_CESSNA_172) || defined(DEMO_AERODYNAMIC_COW) || defined(DEMO_DAM_BREAK)
+#if defined(DEMO_CONCORDE) || defined(DEMO_3D_TAYLOR_GREEN_VORTICES) || defined(DEMO_NASA_COMMON_RESEARCH_MODEL) || defined(DEMO_BOEING_747) || defined(DEMO_CND_GLIDER) || defined(DEMO_PARTICLE_TEST) || defined(DEMO_DELTA_WING) || defined(DEMO_RADIAL_FAN) || defined(DEMO_ELECTRIC_DUCTED_FAN) || defined(DEMO_SPACE_SHUTTLE) || defined(DEMO_RAINDROP_IMPACT) || defined(DEMO_CESSNA_172) || defined(DEMO_AERODYNAMIC_COW) || defined(DEMO_DAM_BREAK) || defined(DEMO_CND_WING)
   #define INTERACTIVE_GRAPHICS // enable interactive graphics; start/pause the simulation by pressing P; either Windows or Linux X11 desktop must be available; on Linux: change to "compile on Linux with X11" command in make.sh
 #endif
 #endif // INTERACTIVE_GRAPHICS_ASCII
