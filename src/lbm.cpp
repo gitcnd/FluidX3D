@@ -24,9 +24,9 @@ const uint transfers = 9u;
 
 uint bytes_per_cell_host() { // returns the number of Bytes per cell allocated in host memory
 	uint bytes_per_cell = 17u; // rho, u, flags
-#ifdef FORCE_FIELD
-	bytes_per_cell += 12u; // F
-#endif // FORCE_FIELD
+//cnd #ifdef FORCE_FIELD
+	if(g_args["FORCE_FIELD"].as<bool>()) bytes_per_cell += 12u; // F
+//cnd #endif // FORCE_FIELD
 #ifdef SURFACE
 	bytes_per_cell += 4u; // phi
 #endif // SURFACE
@@ -37,9 +37,9 @@ uint bytes_per_cell_host() { // returns the number of Bytes per cell allocated i
 }
 uint bytes_per_cell_device() { // returns the number of Bytes per cell allocated in device memory
 	uint bytes_per_cell = velocity_set*sizeof(fpxx)+17u; // fi, rho, u, flags
-#ifdef FORCE_FIELD
-	bytes_per_cell += 12u; // F
-#endif // FORCE_FIELD
+//cnd #ifdef FORCE_FIELD
+	if(g_args["FORCE_FIELD"].as<bool>()) bytes_per_cell += 12u; // F
+//cnd #endif // FORCE_FIELD
 #ifdef SURFACE
 	bytes_per_cell += 12u; // phi, mass, flags
 #endif // SURFACE
@@ -53,9 +53,9 @@ uint bandwidth_bytes_per_cell_device() { // returns the bandwidth in Bytes per c
 #ifdef UPDATE_FIELDS
 	bandwidth_bytes_per_cell += 16u; // rho, u
 #endif // UPDATE_FIELDS
-#ifdef FORCE_FIELD
-	bandwidth_bytes_per_cell += 12u; // F
-#endif // FORCE_FIELD
+//cnd #ifdef FORCE_FIELD
+	if(g_args["FORCE_FIELD"].as<bool>()) bandwidth_bytes_per_cell += 12u; // F
+//cnd #endif // FORCE_FIELD
 #if defined(MOVING_BOUNDARIES)||defined(SURFACE)||defined(TEMPERATURE)
 	bandwidth_bytes_per_cell += (velocity_set-1u)*1u; // neighbor flags have to be loaded
 #endif // MOVING_BOUNDARIES, SURFACE or TEMPERATURE
@@ -118,13 +118,15 @@ void LBM_Domain::allocate(Device& device) {
 	kernel_stream_collide = Kernel(device, N, "stream_collide", fi, rho, u, flags, t, fx, fy, fz);
 	kernel_update_fields = Kernel(device, N, "update_fields", fi, rho, u, flags, t, fx, fy, fz);
 
-#ifdef FORCE_FIELD
+//#ifdef FORCE_FIELD
+	if(g_args["FORCE_FIELD"].as<bool>()) {
 	F = Memory<float>(device, N, 3u);
 	kernel_stream_collide.add_parameters(F);
 	kernel_update_fields.add_parameters(F);
 	kernel_calculate_force_on_boundaries = Kernel(device, N, "calculate_force_on_boundaries", fi, flags, t, F);
 	kernel_reset_force_field = Kernel(device, N, "reset_force_field", F);
-#endif // FORCE_FIELD
+	}
+//cnd #endif // FORCE_FIELD
 
 #ifdef MOVING_BOUNDARIES
 	kernel_update_moving_boundaries = Kernel(device, N, "update_moving_boundaries", u, flags);
@@ -150,13 +152,15 @@ void LBM_Domain::allocate(Device& device) {
 	kernel_update_fields.add_parameters(gi, T);
 #endif // TEMPERATURE
 
-#ifdef PARTICLES
+//cnd #ifdef PARTICLES
+	if(g_args["PARTICLES"].as<bool>()) {
 	particles = Memory<float>(device, (ulong)particles_N, 3u);
 	kernel_integrate_particles = Kernel(device, (ulong)particles_N, "integrate_particles", particles, u, flags, 1.0f);
-#ifdef FORCE_FIELD
-	kernel_integrate_particles.add_parameters(F, fx, fy, fz);
-#endif // FORCE_FIELD
-#endif // PARTICLES
+//cnd #ifdef FORCE_FIELD
+	if(g_args["FORCE_FIELD"].as<bool>()) kernel_integrate_particles.add_parameters(F, fx, fy, fz);
+//cnd #endif // FORCE_FIELD
+	}
+//cnd #endif // PARTICLES
 
 	if(get_D()>1u) allocate_transfer(device);
 }
@@ -189,25 +193,27 @@ void LBM_Domain::enqueue_surface_3() {
 	kernel_surface_3.enqueue_run();
 }
 #endif // SURFACE
-#ifdef FORCE_FIELD
+//cnd #ifdef FORCE_FIELD
 void LBM_Domain::enqueue_calculate_force_on_boundaries() { // calculate forces from fluid on TYPE_S cells
 	kernel_calculate_force_on_boundaries.set_parameters(2u, t).enqueue_run();
 }
-#endif // FORCE_FIELD
+//cnd #endif // FORCE_FIELD
 #ifdef MOVING_BOUNDARIES
 void LBM_Domain::enqueue_update_moving_boundaries() { // mark/unmark cells next to TYPE_S cells with velocity!=0 with TYPE_MS
 	kernel_update_moving_boundaries.enqueue_run();
 }
 #endif // MOVING_BOUNDARIES
-#ifdef PARTICLES
+//cnd #ifdef PARTICLES
 void LBM_Domain::enqueue_integrate_particles(const uint time_step_multiplicator) { // intgegrate particles forward in time and couple particles to fluid
-#ifdef FORCE_FIELD
+//cnd #ifdef FORCE_FIELD
+	if(g_args["FORCE_FIELD"].as<bool>()) {
 	if(particles_rho!=1.0f) kernel_reset_force_field.enqueue_run(); // only reset force field if particles have buoyancy and apply forces on fluid
 	kernel_integrate_particles.set_parameters(5u, fx, fy, fz);
-#endif // FORCE_FIELD
+	}
+//cnd #endif // FORCE_FIELD
 	kernel_integrate_particles.set_parameters(3u, (float)time_step_multiplicator).enqueue_run();
 }
-#endif // PARTICLES
+//cnd #endif // PARTICLES
 
 void LBM_Domain::increment_time_step(const uint steps) {
 	t += (ulong)steps; // increment time step
@@ -395,9 +401,12 @@ string LBM_Domain::device_defines() const { return
 	"\n	#define EQUILIBRIUM_BOUNDARIES"
 #endif // EQUILIBRIUM_BOUNDARIES
 
+	+ (g_args["FORCE_FIELD"].as<bool>() ? "\n     #define FORCE_FIELD" : "") + // cnd - was #ifdef FORCE_FIELD
+/*
 #ifdef FORCE_FIELD
 	"\n	#define FORCE_FIELD"
 #endif // FORCE_FIELD
+*/
 
 #ifdef SURFACE
 	"\n	#define SURFACE"
@@ -414,11 +423,16 @@ string LBM_Domain::device_defines() const { return
 
     + (g_args["SUBGRID"].as<bool>() ? "\n     #define SUBGRID" : "") + // cnd - was #ifdef SUBGRID
 
+      (g_args["PARTICLES"].as<bool>() ? "\n     #define PARTICLES" : "") + // cnd - was #ifdef PARTICLES
+      (g_args["PARTICLES"].as<bool>() ? "\n	#define def_particles_N "+to_string(particles_N)+"ul" : "") + // cnd - was #ifdef PARTICLES
+      (g_args["PARTICLES"].as<bool>() ? "\n	#define def_particles_rho "+to_string(particles_rho)+"f" : "") + // cnd - was #ifdef PARTICLES
+/*
 #ifdef PARTICLES
 	"\n	#define PARTICLES"
 	"\n	#define def_particles_N "+to_string(particles_N)+"ul"
 	"\n	#define def_particles_rho "+to_string(particles_rho)+"f"
 #endif // PARTICLES
+*/
         ""
 ;}
 
@@ -440,10 +454,12 @@ void LBM_Domain::Graphics::allocate(Device& device) {
 #endif // D2Q9
 	kernel_graphics_q = Kernel(device, lbm->get_N(), "graphics_q", camera_parameters, bitmap, zbuffer, 0, lbm->rho, lbm->u);
 
-#ifdef FORCE_FIELD
+//cnd #ifdef FORCE_FIELD
+	if(g_args["FORCE_FIELD"].as<bool>())  {
 	kernel_graphics_flags.add_parameters(lbm->F);
 	kernel_graphics_flags_mc.add_parameters(lbm->F);
-#endif // FORCE_FIELD
+	}
+//cnd #endif // FORCE_FIELD
 
 #ifdef SURFACE
 	skybox = Memory<int>(device, skybox_image->width()*skybox_image->height(), 1u, skybox_image->data());
@@ -459,9 +475,9 @@ void LBM_Domain::Graphics::allocate(Device& device) {
 	kernel_graphics_q.add_parameters(lbm->T);
 #endif // TEMPERATURE
 
-#ifdef PARTICLES
-	kernel_graphics_particles = Kernel(device, lbm->particles.length(), "graphics_particles", camera_parameters, bitmap, zbuffer, lbm->particles);
-#endif // PARTICLES
+//cnd #ifdef PARTICLES
+	if(g_args["PARTICLES"].as<bool>()) kernel_graphics_particles = Kernel(device, lbm->particles.length(), "graphics_particles", camera_parameters, bitmap, zbuffer, lbm->particles);
+//cnd #endif // PARTICLES
 }
 
 bool LBM_Domain::Graphics::update_camera() {
@@ -521,6 +537,11 @@ bool LBM_Domain::Graphics::enqueue_draw_frame(const int visualization_modes, con
 				break;
 		}
 	}
+	if(visualization_modes&VIS_STREAMLINES) kernel_graphics_streamline.set_parameters(3u, field_mode, slice_mode, sx, sy, sz).enqueue_run();
+	if(visualization_modes&VIS_Q_CRITERION) kernel_graphics_q.set_parameters(3u, field_mode).enqueue_run();
+//cnd #ifdef PARTICLES
+	if(g_args["PARTICLES"].as<bool>() && (visualization_modes&VIS_PARTICLES)) kernel_graphics_particles.enqueue_run();
+//cnd #endif // PARTICLES
 	bitmap.enqueue_read_from_device();
 	if(lbm->get_D()>1u) zbuffer.enqueue_read_from_device();
 	return true; // new frame has been rendered
@@ -668,11 +689,13 @@ LBM::LBM(const uint Nx, const uint Ny, const uint Nz, const uint Dx, const uint 
 		for(uint d=0u; d<D; d++) buffers_flags[d] = &(lbm_domain[d]->flags);
 		flags = Memory_Container(this, buffers_flags, "flags");
 	} {
-#ifdef FORCE_FIELD
+//cnd #ifdef FORCE_FIELD
+		if(g_args["FORCE_FIELD"].as<bool>())  {
 		Memory<float>** buffers_F = new Memory<float>*[D];
 		for(uint d=0u; d<D; d++) buffers_F[d] = &(lbm_domain[d]->F);
 		F = Memory_Container(this, buffers_F, "F");
-#endif // FORCE_FIELD
+		}
+//cnd #endif // FORCE_FIELD
 	} {
 #ifdef SURFACE
 		Memory<float>** buffers_phi = new Memory<float>*[D];
@@ -686,9 +709,9 @@ LBM::LBM(const uint Nx, const uint Ny, const uint Nz, const uint Dx, const uint 
 		T = Memory_Container(this, buffers_T, "T");
 #endif // TEMPERATURE
 	} {
-#ifdef PARTICLES
-		particles = &(lbm_domain[0]->particles);
-#endif // PARTICLES
+//cnd #ifdef PARTICLES
+		if(g_args["PARTICLES"].as<bool>()) particles = &(lbm_domain[0]->particles);
+//cnd #endif // PARTICLES
 	}
 #ifdef GRAPHICS
 	graphics = Graphics(this);
@@ -742,9 +765,9 @@ void LBM::sanity_checks_constructor(const vector<Device_Info>& device_infos, con
 	  if(fx!=0.0f||fy!=0.0f||fz!=0.0f) print_error("Volume force is set in LBM constructor in main_setup(), but VOLUME_FORCE is not enabled. Uncomment \"#define VOLUME_FORCE\" in defines.hpp.");
 	} else {
 //cnd #else // VOLUME_FORCE
-#ifndef FORCE_FIELD
-	if(fx==0.0f&&fy==0.0f&&fz==0.0f) print_warning("The VOLUME_FORCE extension is enabled but the volume force in LBM constructor is set to zero. You may disable the extension by commenting out \"#define VOLUME_FORCE\" in defines.hpp.");
-#endif // FORCE_FIELD
+//cnd #ifndef FORCE_FIELD
+	if(g_args["FORCE_FIELD"].as<bool>() && (fx==0.0f&&fy==0.0f&&fz==0.0f)) print_warning("The VOLUME_FORCE extension is enabled but the volume force in LBM constructor is set to zero. You may disable the extension by commenting out \"#define VOLUME_FORCE\" in defines.hpp.");
+//cnd #endif // FORCE_FIELD
 	}
 //cnd #endif // VOLUME_FORCE
 
@@ -756,22 +779,25 @@ void LBM::sanity_checks_constructor(const vector<Device_Info>& device_infos, con
 #else // TEMPERATURE
 	if(alpha==0.0f&&beta==0.0f) print_warning("The TEMPERATURE extension is enabled but the thermal diffusion/expansion coefficients alpha/beta in the LBM constructor are both set to zero. You may disable the extension by commenting out \"#define TEMPERATURE\" in defines.hpp.");
 #endif // TEMPERATURE
-#ifdef PARTICLES
+//cnd #ifdef PARTICLES
+	if(g_args["PARTICLES"].as<bool>()) {
 	if(particles_N==0u) print_error("The PARTICLES extension is enabled but the number of particles is set to 0. Comment out \"#define PARTICLES\" in defines.hpp.");
 	if(get_D()>1u) print_error("The PARTICLES extension is not supported in multi-GPU mode.");
 
 //cnd #if !defined(VOLUME_FORCE)||!defined(FORCE_FIELD)
 	if((!g_args["VOLUME_FORCE"].as<bool>()) && (particles_rho!=1.0f)) print_error("Particle density is set unequal to 1, but particle-fluid 2-way-coupling is not enabled. Uncomment both \"#define VOLUME_FORCE\" and \"#define FORCE_FIELD\" in defines.hpp.");
-#if !defined(FORCE_FIELD)
-	if(particles_rho!=1.0f) print_error("Particle density is set unequal to 1, but particle-fluid 2-way-coupling is not enabled. Uncomment both \"#define VOLUME_FORCE\" and \"#define FORCE_FIELD\" in defines.hpp.");
-#endif // !VOLUME_FORCE||!FORCE_FIELD
+//cnd #if !defined(FORCE_FIELD)
+	if(!g_args["FORCE_FIELD"].as<bool>() && (particles_rho!=1.0f)) print_error("Particle density is set unequal to 1, but particle-fluid 2-way-coupling is not enabled. Uncomment both \"#define VOLUME_FORCE\" and \"#define FORCE_FIELD\" in defines.hpp.");
+//cnd #endif // !VOLUME_FORCE||!FORCE_FIELD
 
-#ifdef FORCE_FIELD
-	if(particles_rho==1.0f) print_warning("Particle density is set to 1, so particles behave as passive tracers without acting a force on the fluid, but particle-fluid 2-way-coupling is enabled. You may comment out \"#define FORCE_FIELD\" in defines.hpp.");
-#endif // FORCE_FIELD
-#else // PARTICLES
+//cnd #ifdef FORCE_FIELD
+	if(g_args["FORCE_FIELD"].as<bool>() && (particles_rho==1.0f)) print_warning("Particle density is set to 1, so particles behave as passive tracers without acting a force on the fluid, but particle-fluid 2-way-coupling is enabled. You may comment out \"#define FORCE_FIELD\" in defines.hpp.");
+//cnd #endif // FORCE_FIELD
+//cnd #else // PARTICLES
+	} else {
 	if(particles_N>0u) print_error("The PARTICLES extension is disabled but the number of particles is set to "+to_string(particles_N)+">0. Uncomment \"#define PARTICLES\" in defines.hpp.");
-#endif // PARTICLES
+        }
+//cnd #endif // PARTICLES
 }
 
 void LBM::sanity_checks_initialization() { // sanity checks during initialization on used extensions based on used flags
@@ -823,18 +849,18 @@ void LBM::initialize() { // write all data fields to device and call kernel_init
 	for(uint d=0u; d<get_D(); d++) lbm_domain[d]->rho.enqueue_write_to_device();
 	for(uint d=0u; d<get_D(); d++) lbm_domain[d]->u.enqueue_write_to_device();
 	for(uint d=0u; d<get_D(); d++) lbm_domain[d]->flags.enqueue_write_to_device();
-#ifdef FORCE_FIELD
-	for(uint d=0u; d<get_D(); d++) lbm_domain[d]->F.enqueue_write_to_device();
-#endif // FORCE_FIELD
+//cnd #ifdef FORCE_FIELD
+	if(g_args["FORCE_FIELD"].as<bool>()) for(uint d=0u; d<get_D(); d++) lbm_domain[d]->F.enqueue_write_to_device();
+//cnd #endif // FORCE_FIELD
 #ifdef SURFACE
 	for(uint d=0u; d<get_D(); d++) lbm_domain[d]->phi.enqueue_write_to_device();
 #endif // SURFACE
 #ifdef TEMPERATURE
 	for(uint d=0u; d<get_D(); d++) lbm_domain[d]->T.enqueue_write_to_device();
 #endif // TEMPERATURE
-#ifdef PARTICLES
-	for(uint d=0u; d<get_D(); d++) lbm_domain[d]->particles.enqueue_write_to_device();
-#endif // PARTICLES
+//cnd #ifdef PARTICLES
+	if(g_args["PARTICLES"].as<bool>()) for(uint d=0u; d<get_D(); d++) lbm_domain[d]->particles.enqueue_write_to_device();
+//cnd #endif // PARTICLES
 
 	for(uint d=0u; d<get_D(); d++) lbm_domain[d]->increment_time_step(); // the communicate calls at initialization need an odd time step
 	communicate_rho_u_flags();
@@ -879,9 +905,9 @@ void LBM::do_time_step() { // call kernel_stream_collide to perform one LBM time
 #endif // GRAPHICS
 	communicate_gi();
 #endif // TEMPERATURE
-#ifdef PARTICLES
-	for(uint d=0u; d<get_D(); d++) lbm_domain[d]->enqueue_integrate_particles(); // intgegrate particles forward in time and couple particles to fluid
-#endif // PARTICLES
+//cnd #ifdef PARTICLES
+	if(g_args["PARTICLES"].as<bool>()) for(uint d=0u; d<get_D(); d++) lbm_domain[d]->enqueue_integrate_particles(); // intgegrate particles forward in time and couple particles to fluid
+//cnd #endif // PARTICLES
 	if(get_D()==1u) for(uint d=0u; d<get_D(); d++) lbm_domain[d]->finish_queue(); // this additional domain synchronization barrier is only required in single-GPU, as communication calls already provide all necessary synchronization barriers in multi-GPU
 	for(uint d=0u; d<get_D(); d++) lbm_domain[d]->increment_time_step();
 }
@@ -914,7 +940,7 @@ void LBM::reset() { // reset simulation (takes effect in following run() call)
 	initialized = false;
 }
 
-#ifdef FORCE_FIELD
+//cnd #ifdef FORCE_FIELD
 void LBM::calculate_force_on_boundaries() { // calculate forces from fluid on TYPE_S cells
 	for(uint d=0u; d<get_D(); d++) lbm_domain[d]->enqueue_calculate_force_on_boundaries();
 	for(uint d=0u; d<get_D(); d++) lbm_domain[d]->finish_queue();
@@ -970,7 +996,7 @@ float3 LBM::calculate_torque_on_object(const float3& rotation_center, const ucha
 	for(uint t=0u; t<threads; t++) torque += torques[t];
 	return float3((float)torque.x, (float)torque.y, (float)torque.z);
 }
-#endif // FORCE_FIELD
+//cnd #endif // FORCE_FIELD
 
 #ifdef MOVING_BOUNDARIES
 void LBM::update_moving_boundaries() { // mark/unmark cells next to TYPE_S cells with velocity!=0 with TYPE_MS
@@ -983,7 +1009,7 @@ void LBM::update_moving_boundaries() { // mark/unmark cells next to TYPE_S cells
 }
 #endif // MOVING_BOUNDARIES
 
-#if defined(PARTICLES)&&!defined(FORCE_FIELD)
+//cnd PARTICLES! #if defined(PARTICLES)&&!defined(FORCE_FIELD)
 void LBM::integrate_particles(const ulong steps, const uint time_step_multiplicator) { // intgegrate passive tracer particles forward in time in stationary flow field
 	info.append(steps, get_t());
 	Clock clock;
@@ -993,13 +1019,14 @@ void LBM::integrate_particles(const ulong steps, const uint time_step_multiplica
 		if(!running) break;
 #endif // INTERACTIVE_GRAPHICS_ASCII || INTERACTIVE_GRAPHICS
 		clock.start();
+		//cnd if(g_args["PARTICLES"].as<bool>() && !g_args["FORCE_FIELD"].as<bool>()) 
 		for(uint d=0u; d<get_D(); d++) lbm_domain[d]->enqueue_integrate_particles(time_step_multiplicator);
 		for(uint d=0u; d<get_D(); d++) lbm_domain[d]->finish_queue();
 		for(uint d=0u; d<get_D(); d++) lbm_domain[d]->increment_time_step(time_step_multiplicator);
 		info.update(clock.stop());
 	}
 }
-#endif // PARTICLES&&!FORCE_FIELD
+//cnd PARTICLES! #endif // PARTICLES&&!FORCE_FIELD
 
 void LBM::write_status(const string& path) { // write LBM status report to a .txt file
 	string status = "";

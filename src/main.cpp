@@ -91,11 +91,14 @@ void main_label(const double frametime) {
 #else // SURFACE
 			const bool surface = false;
 #endif // SURFACE
+/*
 #ifdef PARTICLES
 			const bool particles = true;
 #else // PARTICLES
 			const bool particles = false;
 #endif // PARTICLES
+*/
+			const bool particles = g_args["PARTICLES"].as<bool>();
 			const int ox=2, oy=2;
 			int i = 0;
 

@@ -37,10 +37,10 @@ private:
 	Kernel kernel_update_fields; // reads DDFs and updates (rho, u, T) in device memory
 	Memory<fpxx> fi; // LBM density distribution functions (DDFs); only exist in device memory
 	ulong t_last_update_fields = 0ull; // optimization to not call kernel_update_fields multiple times if (rho, u, T) are already up-to-date
-#ifdef FORCE_FIELD
+//cnd #ifdef FORCE_FIELD
 	Kernel kernel_calculate_force_on_boundaries; // calculate forces from fluid on TYPE_S cells
 	Kernel kernel_reset_force_field; // reset force field (also on TYPE_S cells)
-#endif // FORCE_FIELD
+//cnd #endif // FORCE_FIELD
 #ifdef MOVING_BOUNDARIES
 	Kernel kernel_update_moving_boundaries; // mark/unmark cells next to TYPE_S cells with velocity!=0 with TYPE_MS
 #endif // MOVING_BOUNDARIES
@@ -55,9 +55,9 @@ private:
 #ifdef TEMPERATURE
 	Memory<fpxx> gi; // thermal DDFs
 #endif // TEMPERATURE
-#ifdef PARTICLES
+//cnd #ifdef PARTICLES
 	Kernel kernel_integrate_particles; // intgegrates particles forward in time and couples particles to fluid
-#endif // PARTICLES
+//cnd #endif // PARTICLES
 
 	void allocate(Device& device); // allocate all memory for data fields on host and device and set up kernels
 	string device_defines() const; // returns preprocessor constants for embedding in OpenCL C code
@@ -66,18 +66,18 @@ public:
 	Memory<float> rho; // density of every cell
 	Memory<float> u; // velocity of every cell
 	Memory<uchar> flags; // flags of every cell
-#ifdef FORCE_FIELD
+//cnd #ifdef FORCE_FIELD
 	Memory<float> F; // individual force for every cell
-#endif // FORCE_FIELD
+//cnd #endif // FORCE_FIELD
 #ifdef SURFACE
 	Memory<float> phi; // fill level of every cell
 #endif // SURFACE
 #ifdef TEMPERATURE
 	Memory<float> T; // temperature of every cell
 #endif // TEMPERATURE
-#ifdef PARTICLES
+//cnd #ifdef PARTICLES
 	Memory<float> particles; // particle positions
-#endif // PARTICLES
+//cnd #endif // PARTICLES
 
 	Memory<char> transfer_buffer_p, transfer_buffer_m; // transfer buffers for multi-device domain communication, only allocate one set of transfer buffers in plus/minus directions, for all x/y/z transfers
 	Kernel kernel_transfer[enum_transfer_field::enum_transfer_field_length][2]; // for each field one extract and one insert kernel
@@ -97,15 +97,15 @@ public:
 	void enqueue_surface_2();
 	void enqueue_surface_3();
 #endif // SURFACE
-#ifdef FORCE_FIELD
+//cnd #ifdef FORCE_FIELD
 	void enqueue_calculate_force_on_boundaries(); // calculate forces from fluid on TYPE_S cells
-#endif // FORCE_FIELD
+//cnd #endif // FORCE_FIELD
 #ifdef MOVING_BOUNDARIES
 	void enqueue_update_moving_boundaries(); // mark/unmark cells next to TYPE_S cells with velocity!=0 with TYPE_MS
 #endif // MOVING_BOUNDARIES
-#ifdef PARTICLES
+//cnd #ifdef PARTICLES
 	void enqueue_integrate_particles(const uint time_step_multiplicator=1u); // intgegrates particles forward in time and couples particles to fluid
-#endif // PARTICLES
+//cnd #endif // PARTICLES
 
 	void increment_time_step(const uint steps=1u); // increment time step
 	void reset_time_step(); // reset time step
@@ -163,9 +163,9 @@ public:
 		Image* get_skybox_image() const { return skybox_image; }
 #endif // SURFACE
 
-#ifdef PARTICLES
+//cnd #ifdef PARTICLES
 		Kernel kernel_graphics_particles;
-#endif // PARTICLES
+//cnd #endif // PARTICLES
 
 		ulong t_last_rendered_frame = 0ull; // optimization to not call draw_frame() multiple times if camera_parameters and LBM time step are unchanged
 		bool update_camera(); // update camera_parameters and return if they are changed from their previous state
@@ -390,18 +390,18 @@ public:
 	Memory_Container<float> rho; // density of every cell
 	Memory_Container<float> u; // velocity of every cell
 	Memory_Container<uchar> flags; // flags of every cell
-#ifdef FORCE_FIELD
+//cnd #ifdef FORCE_FIELD
 	Memory_Container<float> F; // individual force for every cell
-#endif // FORCE_FIELD
+//cnd #endif // FORCE_FIELD
 #ifdef SURFACE
 	Memory_Container<float> phi; // fill level of every cell
 #endif // SURFACE
 #ifdef TEMPERATURE
 	Memory_Container<float> T; // temperature of every cell
 #endif // TEMPERATURE
-#ifdef PARTICLES
+//cnd #ifdef PARTICLES
 	Memory<float>* particles; // particle positions
-#endif // PARTICLES
+//cnd #endif // PARTICLES
 
 	LBM(const uint Nx, const uint Ny, const uint Nz, const uint Dx, const uint Dy, const uint Dz, const float nu, const float fx=0.0f, const float fy=0.0f, const float fz=0.0f, const float sigma=0.0f, const float alpha=0.0f, const float beta=0.0f, const uint particles_N=0u, const float particles_rho=0.0f); // compiles OpenCL C code and allocates memory
 	LBM(const uint Nx, const uint Ny, const uint Nz, const float nu, const float fx=0.0f, const float fy=0.0f, const float fz=0.0f, const float sigma=0.0f, const float alpha=0.0f, const float beta=0.0f, const uint particles_N=0u, const float particles_rho=1.0f); // compiles OpenCL C code and allocates memory
@@ -416,18 +416,18 @@ public:
 	void run(const ulong steps=max_ulong); // initializes the LBM simulation (copies data to device and runs initialize kernel), then runs LBM
 	void update_fields(); // update fields (rho, u, T) manually
 	void reset(); // reset simulation (takes effect in following run() call)
-#ifdef FORCE_FIELD
+//cnd #ifdef FORCE_FIELD
 	void calculate_force_on_boundaries(); // calculate forces from fluid on TYPE_S cells
 	float3 calculate_object_center_of_mass(const uchar flag_marker=TYPE_S); // calculate center of mass of all cells flagged with flag_marker
 	float3 calculate_force_on_object(const uchar flag_marker=TYPE_S); // add up force for all cells flagged with flag_marker
 	float3 calculate_torque_on_object(const float3& rotation_center, const uchar flag_marker=TYPE_S); // add up torque around specified rotation_center for all cells flagged with flag_marker
-#endif // FORCE_FIELD
+//cnd #endif // FORCE_FIELD
 #ifdef MOVING_BOUNDARIES
 	void update_moving_boundaries(); // mark/unmark cells next to TYPE_S cells with velocity!=0 with TYPE_MS
 #endif // MOVING_BOUNDARIES
-#if defined(PARTICLES)&&!defined(FORCE_FIELD)
+//cnd PARTICLES!  #if defined(PARTICLES)&&!defined(FORCE_FIELD)
 	void integrate_particles(const ulong steps=max_ulong, const uint time_step_multiplicator=1u); // intgegrate passive tracer particles forward in time in stationary flow field
-#endif // PARTICLES&&!FORCE_FIELD
+//cnd PARTICLES! #endif // PARTICLES&&!FORCE_FIELD
 
 	uint get_Nx() const { return Nx; } // get (global) lattice dimensions in x-direction
 	uint get_Ny() const { return Ny; } // get (global) lattice dimensions in y-direction
@@ -527,9 +527,9 @@ public:
 		int last_visualization_modes=0, last_field_mode=0, last_slice_mode=0, last_slice_x=0, last_slice_y=0, last_slice_z=0; // don't render a new frame if the scene hasn't changed since last frame
 		void default_settings() {
 			visualization_modes |= VIS_FLAG_LATTICE;
-#ifdef PARTICLES
-			visualization_modes |= VIS_PARTICLES;
-#endif // PARTICLES
+//cnd #ifdef PARTICLES
+			if(g_args["PARTICLES"].as<bool>()) visualization_modes |= VIS_PARTICLES;
+//cnd #endif // PARTICLES
 		}
 
 	public:

@@ -2707,6 +2707,8 @@ inline vector<string> get_main_arguments(int argc, char* argv[]) {
 
         ("SUBGRID", "Use SUBGRID #define", cxxopts::value<bool>()->default_value("false"))
         ("VOLUME_FORCE", "Use VOLUME_FORCE #define", cxxopts::value<bool>()->default_value("false"))
+        ("FORCE_FIELD", "Use FORCE_FIELD #define", cxxopts::value<bool>()->default_value("false"))
+        ("PARTICLES", "Use PARTICLES #define", cxxopts::value<bool>()->default_value("false"))
         ("SRT", "Use SRT #define", cxxopts::value<bool>()->default_value("false"))
         ("TRT", "Use TRT #define", cxxopts::value<bool>()->default_value("false"))
         ("floor", "Insert a solid floor", cxxopts::value<bool>()->default_value("false"))
