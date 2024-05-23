@@ -52,9 +52,9 @@ private:
 	Memory<float> mass; // fluid mass; phi=mass/rho
 	Memory<float> massex; // excess mass; used for mass conservation
 #endif // SURFACE
-#ifdef TEMPERATURE
+//cnd #ifdef TEMPERATURE
 	Memory<fpxx> gi; // thermal DDFs
-#endif // TEMPERATURE
+//cnd #endif // TEMPERATURE
 //cnd #ifdef PARTICLES
 	Kernel kernel_integrate_particles; // intgegrates particles forward in time and couples particles to fluid
 //cnd #endif // PARTICLES
@@ -72,9 +72,9 @@ public:
 #ifdef SURFACE
 	Memory<float> phi; // fill level of every cell
 #endif // SURFACE
-#ifdef TEMPERATURE
+//cnd #ifdef TEMPERATURE
 	Memory<float> T; // temperature of every cell
-#endif // TEMPERATURE
+//cnd #endif // TEMPERATURE
 //cnd #ifdef PARTICLES
 	Memory<float> particles; // particle positions
 //cnd #endif // PARTICLES
@@ -216,10 +216,10 @@ private:
 #ifdef SURFACE
 	void communicate_phi_massex_flags();
 #endif // SURFACE
-#ifdef TEMPERATURE
+//cnd #ifdef TEMPERATURE
 	void communicate_gi();
 	void communicate_T();
-#endif // TEMPERATURE
+//cnd #endif // TEMPERATURE
 
 public:
 	template<typename T> class Memory_Container { // does not hold any data itsef, just links to LBM_Domain data
@@ -396,9 +396,9 @@ public:
 #ifdef SURFACE
 	Memory_Container<float> phi; // fill level of every cell
 #endif // SURFACE
-#ifdef TEMPERATURE
+//cnd #ifdef TEMPERATURE
 	Memory_Container<float> T; // temperature of every cell
-#endif // TEMPERATURE
+//cnd #endif // TEMPERATURE
 //cnd #ifdef PARTICLES
 	Memory<float>* particles; // particle positions
 //cnd #endif // PARTICLES

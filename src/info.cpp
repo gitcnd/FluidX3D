@@ -84,10 +84,12 @@ void Info::print_initialize() {
 #ifdef SURFACE
 	println("| Surface Tension | "+alignr(57u, /**********************************************************************************/ to_string(lbm->get_sigma(), 8u))+" |");
 #endif // SURFACE
-#ifdef TEMPERATURE
+//cnd #ifdef TEMPERATURE
+	if(g_args["TEMPERATURE"].as<bool>()) {
 	println("| Thermal Diff.   | "+alignr(57u, /**********************************************************************************/ to_string(lbm->get_alpha(), 8u))+" |");
 	println("| Thermal Exp.    | "+alignr(57u, /***********************************************************************************/ to_string(lbm->get_beta(), 8u))+" |");
-#endif // TEMPERATURE
+	}
+//cnd #endif // TEMPERATURE
 #ifndef INTERACTIVE_GRAPHICS_ASCII
 	println("|---------.-------'-----.-----------.-------------------.---------------------|");
 	println("| MLUPs   | Bandwidth   | Steps/s   | Current Step      | "+string(steps==max_ulong?"Elapsed Time  ":"Time Remaining")+"      |");

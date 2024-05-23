@@ -61,11 +61,11 @@
       *	TRT							Done
 
       * VOLUME_FORCE						Done
-	TEMPERATURE (req: VOLUME_FORCE)
+      *	TEMPERATURE (req: VOLUME_FORCE)				Done
       *	FORCE_FIELD						Done
 	EQUILIBRIUM_BOUNDARIES
-	MOVING_BOUNDARIES
-	SURFACE (req: UPDATE_FIELDS)
+	MOVING_BOUNDARIES							unfinished
+	SURFACE (req: UPDATE_FIELDS)						unfinished
       *	SUBGRID							Done
       *	PARTICLES (req: UPDATE_FIELDS)				Done
       *	UPDATE_FIELDS						Done

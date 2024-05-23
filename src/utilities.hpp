@@ -2709,6 +2709,11 @@ inline vector<string> get_main_arguments(int argc, char* argv[]) {
         ("VOLUME_FORCE", "Use VOLUME_FORCE #define", cxxopts::value<bool>()->default_value("false"))
         ("FORCE_FIELD", "Use FORCE_FIELD #define", cxxopts::value<bool>()->default_value("false"))
         ("PARTICLES", "Use PARTICLES #define", cxxopts::value<bool>()->default_value("false"))
+        ("TEMPERATURE", "Use TEMPERATURE #define", cxxopts::value<bool>()->default_value("false"))
+        ("UPDATE_FIELDS", "Use UPDATE_FIELDS #define", cxxopts::value<bool>()->default_value("false"))
+        ("MOVING_BOUNDARIES", "Use MOVING_BOUNDARIES #define", cxxopts::value<bool>()->default_value("false"))
+        ("SURFACE", "Use SURFACE #define", cxxopts::value<bool>()->default_value("false"))
+
         ("SRT", "Use SRT #define", cxxopts::value<bool>()->default_value("false"))
         ("TRT", "Use TRT #define", cxxopts::value<bool>()->default_value("false"))
         ("floor", "Insert a solid floor", cxxopts::value<bool>()->default_value("false"))
