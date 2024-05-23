@@ -2703,6 +2703,7 @@ inline vector<string> get_main_arguments(int argc, char* argv[]) {
         ("wait", "Wait for keypress befor ending", cxxopts::value<bool>()->default_value("false"))
         ("pause", "Do not auto-start the simulation", cxxopts::value<bool>()->default_value("false"))
         ("fps", "Frames per Second for video output", cxxopts::value<float>()->default_value("25.0"))
+        ("slomo", "What speed the video plays at 1=realtime 10=10x slower", cxxopts::value<float>()->default_value("1.0"))
 
         ("SUBGRID", "Use SUBGRID #define", cxxopts::value<bool>()->default_value("false"))
         ("VOLUME_FORCE", "Use VOLUME_FORCE #define", cxxopts::value<bool>()->default_value("false"))

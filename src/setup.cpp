@@ -1526,7 +1526,7 @@ Re 50,466 Mach 0.0143 results from 0.15m chord at 5m/s speed in 16C temp-offset 
 
 #ifdef DEMO_CND_WING //cnd from AERODYNAMIC_COW
 void main_setup() { // input parameter drivern sim; 					required extensions in defines.hpp: FP16S, EQUILIBRIUM_BOUNDARIES, SUBGRID, INTERACTIVE_GRAPHICS or GRAPHICS
-    float next_frame_time = 0.0f; 	// When we reach (or pass) this, output a new .png frame when recording is on.
+    float next_frame_time = -1.0f; 	// When we reach (or pass) this, output a new .png frame when recording is on.
 
     // SI Units
     float velocity_si = 5.0f; 		// m/s
@@ -1626,14 +1626,12 @@ void main_setup() { // input parameter drivern sim; 					required extensions in 
 		  // info.allow_labeling ?
 		  float sim_time= units.si_t(1ull)==1.0f ? info.lbm->get_t() : units.si_t(info.lbm->get_t());
 		  if(sim_time >= next_frame_time) {
-		    next_frame_time+=1.0f/g_args["fps"].as<float>();
+		    if(next_frame_time < 0.0f) next_frame_time =sim_time + (1.0f/g_args["fps"].as<float>())/g_args["slomo"].as<float>(); // First frame
+		    else next_frame_time+=(1.0f/g_args["fps"].as<float>())/g_args["slomo"].as<float>();
 
 		    lbm.graphics.write_frame();
 		    // key_O=false;
-		    std::cout << "step=" << lbm.get_t() << std::endl;
-		    std::cout << "time(s)=" << sim_time << std::endl;
-		    std::cout << "allow_labeling=" << info.allow_labeling << std::endl;
-		    std::cout << "allow_rendering=" << info.allow_rendering << std::endl;
+		    std::cout <<std::endl << " step=" << lbm.get_t() << " time(s)=" << sim_time << " allow_labeling=" << info.allow_labeling << " allow_rendering=" << info.allow_rendering << " next_frame_time=" << next_frame_time;
                   }
 		}
 		lbm.run(1u);
