@@ -68,6 +68,7 @@
 	SURFACE (req: UPDATE_FIELDS)
       *	SUBGRID							Done
       *	PARTICLES (req: UPDATE_FIELDS)				Done
+      *	UPDATE_FIELDS						Done
 
 	GRAPHICS
 	INTERACTIVE_GRAPHICS_ASCII (req: GRAPHICS)

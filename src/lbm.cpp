@@ -50,9 +50,9 @@ uint bytes_per_cell_device() { // returns the number of Bytes per cell allocated
 }
 uint bandwidth_bytes_per_cell_device() { // returns the bandwidth in Bytes per cell per time step from/to device memory
 	uint bandwidth_bytes_per_cell = velocity_set*2u*sizeof(fpxx)+1u; // lattice.set()*2*fi, flags
-#ifdef UPDATE_FIELDS
-	bandwidth_bytes_per_cell += 16u; // rho, u
-#endif // UPDATE_FIELDS
+//cnd #ifdef UPDATE_FIELDS
+	if(g_args["UPDATE_FIELDS"].as<bool>()) bandwidth_bytes_per_cell += 16u; // rho, u
+//cnd #endif // UPDATE_FIELDS
 //cnd #ifdef FORCE_FIELD
 	if(g_args["FORCE_FIELD"].as<bool>()) bandwidth_bytes_per_cell += 12u; // F
 //cnd #endif // FORCE_FIELD
@@ -172,12 +172,12 @@ void LBM_Domain::enqueue_stream_collide() { // call kernel_stream_collide to per
 	kernel_stream_collide.set_parameters(4u, t, fx, fy, fz).enqueue_run();
 }
 void LBM_Domain::enqueue_update_fields() { // update fields (rho, u, T) manually
-#ifndef UPDATE_FIELDS
-	if(t!=t_last_update_fields) { // only run kernel_update_fields if the time step has changed since last update
+//cnd #ifndef UPDATE_FIELDS
+	if(g_args["UPDATE_FIELDS"].as<bool>() && (t!=t_last_update_fields)) { // only run kernel_update_fields if the time step has changed since last update
 		kernel_update_fields.set_parameters(4u, t, fx, fy, fz).enqueue_run();
 		t_last_update_fields = t;
 	}
-#endif // UPDATE_FIELDS
+//cnd #endif // UPDATE_FIELDS
 }
 #ifdef SURFACE
 void LBM_Domain::enqueue_surface_0() {
@@ -217,15 +217,15 @@ void LBM_Domain::enqueue_integrate_particles(const uint time_step_multiplicator)
 
 void LBM_Domain::increment_time_step(const uint steps) {
 	t += (ulong)steps; // increment time step
-#ifdef UPDATE_FIELDS
-	t_last_update_fields = t;
-#endif // UPDATE_FIELDS
+//cnd #ifdef UPDATE_FIELDS
+	if(g_args["UPDATE_FIELDS"].as<bool>()) t_last_update_fields = t;
+//cnd #endif // UPDATE_FIELDS
 }
 void LBM_Domain::reset_time_step() {
 	t = 0ull; // increment time step
-#ifdef UPDATE_FIELDS
-	t_last_update_fields = t;
-#endif // UPDATE_FIELDS
+//cnd #ifdef UPDATE_FIELDS
+	if(g_args["UPDATE_FIELDS"].as<bool>()) t_last_update_fields = t;
+//cnd #endif // UPDATE_FIELDS
 }
 void LBM_Domain::finish_queue() {
 	device.finish_queue();
@@ -387,11 +387,14 @@ string LBM_Domain::device_defines() const { return
 	"\n	#define store(p,o,x) p[o]=x" // regular float write
 #endif // FP32
 
+	+ (g_args["UPDATE_FIELDS"].as<bool>() ? "\n     #define UPDATE_FIELDS" : "") + // cnd - was #ifdef UPDATE_FIELDS
+/*
 #ifdef UPDATE_FIELDS
 	"\n	#define UPDATE_FIELDS"
 #endif // UPDATE_FIELDS
+*/
 
-	+ (g_args["VOLUME_FORCE"].as<bool>() ? "\n     #define VOLUME_FORCE" : "") + // cnd - was #ifdef VOLUME_FORCE
+	  (g_args["VOLUME_FORCE"].as<bool>() ? "\n     #define VOLUME_FORCE" : "") + // cnd - was #ifdef VOLUME_FORCE
 
 #ifdef MOVING_BOUNDARIES
 	"\n	#define MOVING_BOUNDARIES"
@@ -784,6 +787,12 @@ void LBM::sanity_checks_constructor(const vector<Device_Info>& device_infos, con
 	if(particles_N==0u) print_error("The PARTICLES extension is enabled but the number of particles is set to 0. Comment out \"#define PARTICLES\" in defines.hpp.");
 	if(get_D()>1u) print_error("The PARTICLES extension is not supported in multi-GPU mode.");
 
+	// cnd - logic from end of src/defines.hpp
+	if(g_args["SURFACE"].as<bool>() && !g_args["UPDATE_FIELDS"].as<bool>()) print_error("The SURFACE extension is enabled but the required UPDATE_FIELDS is not.");
+	if(g_args["PARTICLES"].as<bool>() && !g_args["UPDATE_FIELDS"].as<bool>()) print_error("The PARTICLES extension is enabled but the required UPDATE_FIELDS is not.");
+	if(g_args["GRAPHICS"].as<bool>() && !g_args["UPDATE_FIELDS"].as<bool>()) print_error("The GRAPHICS extension is enabled but the required UPDATE_FIELDS is not.");
+	if(g_args["TEMPERATURE"].as<bool>() && !g_args["VOLUME_FORCE"].as<bool>()) print_error("The TEMPERATURE extension is enabled but the required VOLUME_FORCE is not.");
+
 //cnd #if !defined(VOLUME_FORCE)||!defined(FORCE_FIELD)
 	if((!g_args["VOLUME_FORCE"].as<bool>()) && (particles_rho!=1.0f)) print_error("Particle density is set unequal to 1, but particle-fluid 2-way-coupling is not enabled. Uncomment both \"#define VOLUME_FORCE\" and \"#define FORCE_FIELD\" in defines.hpp.");
 //cnd #if !defined(FORCE_FIELD)
@@ -1128,11 +1137,11 @@ void LBM::voxelize_stl(const string& path, const float size, const uchar flag) {
 
 #ifdef GRAPHICS
 int* LBM::Graphics::draw_frame() {
-#ifndef UPDATE_FIELDS
-	if(visualization_modes&(VIS_FIELD|VIS_STREAMLINES|VIS_Q_CRITERION)) {
+//cnd #ifndef UPDATE_FIELDS
+	if(g_args["UPDATE_FIELDS"].as<bool>() && (visualization_modes&(VIS_FIELD|VIS_STREAMLINES|VIS_Q_CRITERION))) {
 		for(uint d=0u; d<lbm->get_D(); d++) lbm->lbm_domain[d]->enqueue_update_fields(); // only call update_fields() if the time step has changed since the last rendered frame
 	}
-#endif // UPDATE_FIELDS
+//cnd #endif // UPDATE_FIELDS
 	if(key_1) { visualization_modes = (visualization_modes&~0b11)|(((visualization_modes&0b11)+1)%4); key_1 = false; }
 	if(key_2) { visualization_modes ^= VIS_FIELD        ; key_2 = false; }
 	if(key_3) { visualization_modes ^= VIS_STREAMLINES  ; key_3 = false; }
