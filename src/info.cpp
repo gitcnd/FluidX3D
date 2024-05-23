@@ -81,9 +81,9 @@ void Info::print_initialize() {
 //cnd #ifdef VOLUME_FORCE
        if(g_args["VOLUME_FORCE"].as<bool>()) println("| Volume Force    | "+alignr(57u, alignr(15u, to_string(lbm->get_fx(), 8u))+","+alignr(15u, to_string(lbm->get_fy(), 8u))+","+alignr(15u, to_string(lbm->get_fz(), 8u)))+" |");
 //#endif // VOLUME_FORCE
-#ifdef SURFACE
-	println("| Surface Tension | "+alignr(57u, /**********************************************************************************/ to_string(lbm->get_sigma(), 8u))+" |");
-#endif // SURFACE
+//cnd #ifdef SURFACE
+	if(g_args["SURFACE"].as<bool>()) println("| Surface Tension | "+alignr(57u, /**********************************************************************************/ to_string(lbm->get_sigma(), 8u))+" |");
+//cnd #endif // SURFACE
 //cnd #ifdef TEMPERATURE
 	if(g_args["TEMPERATURE"].as<bool>()) {
 	println("| Thermal Diff.   | "+alignr(57u, /**********************************************************************************/ to_string(lbm->get_alpha(), 8u))+" |");

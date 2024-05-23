@@ -44,14 +44,14 @@ private:
 //cnd #ifdef MOVING_BOUNDARIES
 	Kernel kernel_update_moving_boundaries; // mark/unmark cells next to TYPE_S cells with velocity!=0 with TYPE_MS
 //cnd #endif // MOVING_BOUNDARIES
-#ifdef SURFACE
+//cnd #ifdef SURFACE
 	Kernel kernel_surface_0; // additional kernel for computing mass conservation and mass flux computation
 	Kernel kernel_surface_1; // additional kernel for flag handling
 	Kernel kernel_surface_2; // additional kernel for flag handling
 	Kernel kernel_surface_3; // additional kernel for flag handling and mass conservation
 	Memory<float> mass; // fluid mass; phi=mass/rho
 	Memory<float> massex; // excess mass; used for mass conservation
-#endif // SURFACE
+//cnd #endif // SURFACE
 //cnd #ifdef TEMPERATURE
 	Memory<fpxx> gi; // thermal DDFs
 //cnd #endif // TEMPERATURE
@@ -69,9 +69,9 @@ public:
 //cnd #ifdef FORCE_FIELD
 	Memory<float> F; // individual force for every cell
 //cnd #endif // FORCE_FIELD
-#ifdef SURFACE
+//cnd #ifdef SURFACE
 	Memory<float> phi; // fill level of every cell
-#endif // SURFACE
+//cnd #endif // SURFACE
 //cnd #ifdef TEMPERATURE
 	Memory<float> T; // temperature of every cell
 //cnd #endif // TEMPERATURE
@@ -91,12 +91,12 @@ public:
 	void enqueue_initialize(); // write all data fields to device and call kernel_initialize
 	void enqueue_stream_collide(); // call kernel_stream_collide to perform one LBM time step
 	void enqueue_update_fields(); // update fields (rho, u, T) manually
-#ifdef SURFACE
+//cnd #ifdef SURFACE
 	void enqueue_surface_0();
 	void enqueue_surface_1();
 	void enqueue_surface_2();
 	void enqueue_surface_3();
-#endif // SURFACE
+//cnd #endif // SURFACE
 //cnd #ifdef FORCE_FIELD
 	void enqueue_calculate_force_on_boundaries(); // calculate forces from fluid on TYPE_S cells
 //cnd #endif // FORCE_FIELD
@@ -154,14 +154,14 @@ public:
 		Kernel kernel_graphics_streamline; // render streamlines
 		Kernel kernel_graphics_q; // render vorticity (Q-criterion)
 
-#ifdef SURFACE
+//cnd #ifdef SURFACE
 		const string path_skybox = get_exe_path()+"../skybox/skybox8k.png";
 		Image* skybox_image = nullptr;
 		Memory<int> skybox; // skybox for free surface raytracing
 		Kernel kernel_graphics_rasterize_phi; // rasterize free surface
 		Kernel kernel_graphics_raytrace_phi; // raytrace free surface
 		Image* get_skybox_image() const { return skybox_image; }
-#endif // SURFACE
+//cnd #endif // SURFACE
 
 //cnd #ifdef PARTICLES
 		Kernel kernel_graphics_particles;
@@ -174,15 +174,15 @@ public:
 		Graphics() {} // default constructor
 		Graphics(LBM_Domain* lbm) {
 			this->lbm = lbm;
-#ifdef SURFACE
-			skybox_image = read_png(path_skybox);
-#endif // SURFACE
+//cnd #ifdef SURFACE
+			if(g_args["SURFACE"].as<bool>()) skybox_image = read_png(path_skybox);
+//cnd #endif // SURFACE
 		}
 		Graphics& operator=(const Graphics& graphics) { // copy assignment
 			lbm = graphics.lbm;
-#ifdef SURFACE
-			skybox_image = graphics.get_skybox_image();
-#endif // SURFACE
+//cnd #ifdef SURFACE
+			if(g_args["SURFACE"].as<bool>()) skybox_image = graphics.get_skybox_image();
+//cnd #endif // SURFACE
 			return *this;
 		}
 		void allocate(Device& device); // allocate memory for bitmap and zbuffer
@@ -213,9 +213,9 @@ private:
 	void communicate_fi();
 	void communicate_rho_u_flags();
 	void communicate_flags();
-#ifdef SURFACE
+//cnd #ifdef SURFACE
 	void communicate_phi_massex_flags();
-#endif // SURFACE
+//cnd #endif // SURFACE
 //cnd #ifdef TEMPERATURE
 	void communicate_gi();
 	void communicate_T();
@@ -393,9 +393,9 @@ public:
 //cnd #ifdef FORCE_FIELD
 	Memory_Container<float> F; // individual force for every cell
 //cnd #endif // FORCE_FIELD
-#ifdef SURFACE
+//cnd #ifdef SURFACE
 	Memory_Container<float> phi; // fill level of every cell
-#endif // SURFACE
+//cnd #endif // SURFACE
 //cnd #ifdef TEMPERATURE
 	Memory_Container<float> T; // temperature of every cell
 //cnd #endif // TEMPERATURE

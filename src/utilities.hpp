@@ -2712,7 +2712,9 @@ inline vector<string> get_main_arguments(int argc, char* argv[]) {
         ("TEMPERATURE", "Use TEMPERATURE #define", cxxopts::value<bool>()->default_value("false"))
         ("UPDATE_FIELDS", "Use UPDATE_FIELDS #define", cxxopts::value<bool>()->default_value("false"))
         ("MOVING_BOUNDARIES", "Use MOVING_BOUNDARIES #define", cxxopts::value<bool>()->default_value("false"))
+        ("EQUILIBRIUM_BOUNDARIES", "Use EQUILIBRIUM_BOUNDARIES #define", cxxopts::value<bool>()->default_value("false"))
         ("SURFACE", "Use SURFACE #define", cxxopts::value<bool>()->default_value("false"))
+        ("GRAPHICS", "Use GRAPHICS #define", cxxopts::value<bool>()->default_value("false"))
 
         ("SRT", "Use SRT #define", cxxopts::value<bool>()->default_value("false"))
         ("TRT", "Use TRT #define", cxxopts::value<bool>()->default_value("false"))
@@ -2721,13 +2723,20 @@ inline vector<string> get_main_arguments(int argc, char* argv[]) {
 
         ("d,display", "Display", cxxopts::value<std::string>()->default_value("0,1"));
 
-//    try {
+    try {
     //auto result = options.parse(argc, argv);
 #if defined(_WIN32)
      g_args = options.parse(new_argv.size(), new_argv.data());
 #else
     g_args = options.parse(argc, argv);
 #endif
+
+    } catch(const std::exception& e) {
+        std::cerr << "Error parsing options: " << e.what() << std::endl;
+        std::cerr << options.help() << std::endl;
+        exit(1);
+    }
+
 
     if (g_args.count("help")) {
 	//info.print_logo();

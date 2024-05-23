@@ -86,11 +86,14 @@ void main_label(const double frametime) {
 			draw_label(camera.width-16*(FONT_WIDTH)-1, 2, "Press H for Help", c);
 		} else {
 			if(info.lbm->graphics.visualization_modes&(VIS_FIELD|VIS_STREAMLINES|VIS_Q_CRITERION)) draw_scale(info.lbm->graphics.field_mode, c);
+/*
 #ifdef SURFACE
 			const bool surface = true;
 #else // SURFACE
 			const bool surface = false;
 #endif // SURFACE
+*/
+			const bool surface = g_args["SURFACE"].as<bool>();
 /*
 #ifdef PARTICLES
 			const bool particles = true;

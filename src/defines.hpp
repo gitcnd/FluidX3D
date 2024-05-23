@@ -63,8 +63,8 @@
       * VOLUME_FORCE						Done
       *	TEMPERATURE (req: VOLUME_FORCE)				Done
       *	FORCE_FIELD						Done
-	EQUILIBRIUM_BOUNDARIES
-	MOVING_BOUNDARIES							unfinished
+      *	EQUILIBRIUM_BOUNDARIES					Done
+      *	MOVING_BOUNDARIES					Done
 	SURFACE (req: UPDATE_FIELDS)						unfinished
       *	SUBGRID							Done
       *	PARTICLES (req: UPDATE_FIELDS)				Done
