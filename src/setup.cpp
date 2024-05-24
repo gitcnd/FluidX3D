@@ -5,6 +5,9 @@
 #ifdef BENCHMARK
 #include "info.hpp"
 void main_setup() { // benchmark; 							required extensions in defines.hpp: BENCHMARK, optionally FP16S or FP16C
+
+// msin() from main.cpp kicks off a new thread called main_physics() which in turn calls main_setup()
+
 	// ################################################################## define simulation box size, viscosity and volume force ###################################################################
 	uint mlups = 0u; {
 

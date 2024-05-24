@@ -62,6 +62,7 @@ extern int fpxxsize;
 //extern Info info; // declared in info.cpp
 extern bool key_P;
 extern uint velocity_set,dimensions,transfers; // See lbm.cpp
+extern int GRAPHICS_BACKGROUND_COLOR; // for speed - used every frame
 
 
 inline void parallel_for(const uint N, const uint threads, std::function<void(uint, uint)> lambda) { // usage: parallel_for(N, threads, [&](uint n, uint t) { ... });
@@ -2722,6 +2723,14 @@ inline vector<string> get_main_arguments(int argc, char* argv[]) {
 
         ("GRAPHICS", "Use interactive graphics (see also --window)", cxxopts::value<bool>()->default_value("false"))
         ("GRAPHICS_ASCII", "Use interactive console (text) graphics", cxxopts::value<bool>()->default_value("false"))
+        ("FRAME_WIDTH", "Screen or Window resolution width", cxxopts::value<int>()->default_value("1920"))
+        ("FRAME_HEIGHT", "Screen or Window resolution height", cxxopts::value<int>()->default_value("1080"))
+        ("BACKGROUND_COLOR", "Screen background color", cxxopts::value<int>()->default_value("0x000000"))
+        ("STREAMLINE_SPARSE", "set how many streamlines there are every x lattice points", cxxopts::value<int>()->default_value("4"))
+        ("STREAMLINE_LENGTH", "set maximum length of streamlines", cxxopts::value<int>()->default_value("128"))
+        ("TRANSPARENCY", "semi-transparent rendering, number represents transparency (equal to 1-opacity). 0=disabled", cxxopts::value<bool>()->default_value("0"))
+	//FRAME_WIDTH\|FRAME_HEIGHT\|BACKGROUND_COLOR\|STREAMLINE_SPARSE\|STREAMLINE_LENGTH\|FRAME_WIDTH
+	//FRAME_WIDTH|FRAME_HEIGHT|BACKGROUND_COLOR|STREAMLINE_SPARSE|STREAMLINE_LENGTH|FRAME_WIDTH
 
         ("D2Q9", "Use D2Q9 #define", cxxopts::value<bool>()->default_value("false"))
         ("D3Q15", "Use D3Q15 #define", cxxopts::value<bool>()->default_value("false"))
@@ -2743,12 +2752,7 @@ inline vector<string> get_main_arguments(int argc, char* argv[]) {
     g_args = options.parse(argc, argv);
 #endif
 
-    } catch(const std::exception& e) {
-        std::cerr << "Error parsing options: " << e.what() << std::endl;
-        std::cerr << options.help() << std::endl;
-        exit(1);
-    }
-
+    std::cerr << "parsed ok1" << std::endl;
 
     if (g_args.count("help")) {
 	//info.print_logo();
@@ -2782,6 +2786,8 @@ inline vector<string> get_main_arguments(int argc, char* argv[]) {
         exit(1);
     }
 
+    std::cerr << "parsed ok2" << std::endl;
+
     if (g_args["BENCHMARK"].as<bool>() && (
 	  g_args["UPDATE_FIELDS"].as<bool>() ||
 	  g_args["VOLUME_FORCE"].as<bool>() ||
@@ -2798,6 +2804,17 @@ inline vector<string> get_main_arguments(int argc, char* argv[]) {
         exit(0);
     }
 
+    std::cerr << "parsed ok3" << std::endl;
+
+    GRAPHICS_BACKGROUND_COLOR=g_args["BACKGROUND_COLOR"].as<int>();
+
+
+
+    } catch(const std::exception& e) {
+        std::cerr << "Error parsing options: " << e.what() << std::endl;
+        std::cerr << options.help() << std::endl;
+        exit(1);
+    }
 
 /*
         if (g_args.count("file")) {
@@ -2813,17 +2830,6 @@ inline vector<string> get_main_arguments(int argc, char* argv[]) {
 
 */
 
-
-/*
-    } catch (const cxxopts::exceptions& e) {
-        std::cerr << "Error parsing options: " << e.what() << std::endl;
-        std::cerr << options.help() << std::endl;
-        exit(1);
-    } catch (const std::exception& e) {
-        std::cerr << "Unexpected error: " << e.what() << std::endl;
-        exit(1);
-    }
-*/
 
 
     /*
@@ -2850,6 +2856,8 @@ inline vector<string> get_main_arguments(int argc, char* argv[]) {
 
     */
 
+    std::cerr << "parsed ok4" << std::endl;
+
     if (g_args.count("d")) {
       std::string d_param = g_args["d"].as<std::string>();
       std::istringstream tokenStream(d_param);
@@ -2858,8 +2866,10 @@ inline vector<string> get_main_arguments(int argc, char* argv[]) {
       while (std::getline(tokenStream, token, ',')) {
         main_arguments.push_back(token);
       }
+    std::cerr << "parsed ok4" << std::endl;
       return main_arguments;
     } else {
+    std::cerr << "parsed ok5" << std::endl;
       return vector<string>();
     }
 }
@@ -3189,13 +3199,13 @@ inline int color(const float red, const float green, const float blue, const flo
 inline int color(const float3 rgb) {
 	return color(rgb.x, rgb.y, rgb.z);
 }
-inline int red(const int color) {
+inline int red(int color) {
 	return (color>>16)&255;
 }
-inline int green(const int color) {
+inline int green(int color) {
 	return (color>>8)&255;
 }
-inline int blue(const int color) {
+inline int blue(int color) {
 	return color&255;
 }
 inline int alpha(const int color) {
@@ -3208,7 +3218,7 @@ inline int grayscale(const int color) {
 	const int b = brightness(color);
 	return b<<16|b<<8|b;
 }
-inline int invert(const int color) { // invert color
+inline int invert(int color) { // invert color
 	return (255-red(color))<<16|(255-green(color))<<8|(255-blue(color));
 }
 inline int invert_brightness(const int color) { // invert brightness, but retain color
