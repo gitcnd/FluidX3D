@@ -2716,9 +2716,12 @@ inline vector<string> get_main_arguments(int argc, char* argv[]) {
         ("MOVING_BOUNDARIES", "Use MOVING_BOUNDARIES #define", cxxopts::value<bool>()->default_value("false"))
         ("EQUILIBRIUM_BOUNDARIES", "Use EQUILIBRIUM_BOUNDARIES #define", cxxopts::value<bool>()->default_value("false"))
         ("SURFACE", "Use SURFACE #define", cxxopts::value<bool>()->default_value("false"))
-        ("GRAPHICS", "Use GRAPHICS #define", cxxopts::value<bool>()->default_value("false"))
         ("FP16S", "Use FP16S #define", cxxopts::value<bool>()->default_value("false"))
         ("FP16C", "Use FP16C #define", cxxopts::value<bool>()->default_value("false"))
+        ("BENCHMARK", "Run GPU Benchmark. See --FP16C and --FP16S too", cxxopts::value<bool>()->default_value("false"))
+
+        ("GRAPHICS", "Use interactive graphics (see also --window)", cxxopts::value<bool>()->default_value("false"))
+        ("GRAPHICS_ASCII", "Use interactive console (text) graphics", cxxopts::value<bool>()->default_value("false"))
 
         ("D2Q9", "Use D2Q9 #define", cxxopts::value<bool>()->default_value("false"))
         ("D3Q15", "Use D3Q15 #define", cxxopts::value<bool>()->default_value("false"))
@@ -2777,6 +2780,22 @@ inline vector<string> get_main_arguments(int argc, char* argv[]) {
     } else {
         std::cerr << "Must pick one of --D3Q15 --D3Q19 --D3Q27 or --D2Q9" << std::endl;
         exit(1);
+    }
+
+    if (g_args["BENCHMARK"].as<bool>() && (
+	  g_args["UPDATE_FIELDS"].as<bool>() ||
+	  g_args["VOLUME_FORCE"].as<bool>() ||
+	  g_args["FORCE_FIELD"].as<bool>() ||
+	  g_args["MOVING_BOUNDARIES"].as<bool>() ||
+	  g_args["EQUILIBRIUM_BOUNDARIES"].as<bool>() ||
+	  g_args["SURFACE"].as<bool>() ||
+	  g_args["TEMPERATURE"].as<bool>() ||
+	  g_args["SUBGRID"].as<bool>() ||
+	  g_args["PARTICLES"].as<bool>() ||
+	  g_args["GRAPHICS"].as<bool>() ||
+	  g_args["GRAPHICS_ASCII"].as<bool>() ) ) {
+        std::cout << "To use --BENCHMARK, be sure NOT to use any of: BENCHMARK, UPDATE_FIELDS, VOLUME_FORCE, FORCE_FIELD, MOVING_BOUNDARIES, EQUILIBRIUM_BOUNDARIES, SURFACE, TEMPERATURE, SUBGRID, PARTICLES, GRAPHICS, GRAPHICS_ASCII" << std::endl;
+        exit(0);
     }
 
 

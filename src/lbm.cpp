@@ -941,9 +941,9 @@ void LBM::sanity_checks_initialization() { // sanity checks during initializatio
 }
 
 void LBM::initialize() { // write all data fields to device and call kernel_initialize
-#ifndef BENCHMARK
-	sanity_checks_initialization();
-#endif // BENCHMARK
+//cnd #ifndef BENCHMARK
+	if(!g_args["BENCHMARK"].as<bool>()) sanity_checks_initialization();
+//cnd #endif // BENCHMARK
 
 	for(uint d=0u; d<get_D(); d++) lbm_domain[d]->rho.enqueue_write_to_device();
 	for(uint d=0u; d<get_D(); d++) lbm_domain[d]->u.enqueue_write_to_device();

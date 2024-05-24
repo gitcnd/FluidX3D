@@ -2,7 +2,7 @@
 
 
 //#define BENCHMARK // disable all extensions and setups and run benchmark setup instead
-#define USE_FXFILE // get stl filename from %FXFILE% env var (or -f switch)
+//cnd #define USE_FXFILE // get stl filename from %FXFILE% env var (or -f switch)
 
 #ifndef BENCHMARK
 //#define DEMO_CONCORDE
