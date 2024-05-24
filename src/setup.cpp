@@ -1581,6 +1581,7 @@ void main_setup() { // input parameter drivern sim; 					required extensions in 
 	const float lbm_u = 0.1f;			// the velocity in lattice units (lattice nodes per time step).
 	units.set_m_kg_s(lbm_length, lbm_u, 1.0f, si_length, si_u, si_rho);
 	print_info("Re = "+to_string(to_uint(units.si_Re(si_length, si_u, si_nu))));	// 
+	// D2Q9?
 	LBM lbm(lbm_N, units.nu(si_nu));
 
 	// ###################################################################################### define geometry ######################################################################################

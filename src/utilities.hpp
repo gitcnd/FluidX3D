@@ -61,6 +61,7 @@ extern cxxopts::ParseResult g_args;
 extern int fpxxsize;
 //extern Info info; // declared in info.cpp
 extern bool key_P;
+extern uint velocity_set,dimensions,transfers; // See lbm.cpp
 
 
 inline void parallel_for(const uint N, const uint threads, std::function<void(uint, uint)> lambda) { // usage: parallel_for(N, threads, [&](uint n, uint t) { ... });
@@ -2719,6 +2720,11 @@ inline vector<string> get_main_arguments(int argc, char* argv[]) {
         ("FP16S", "Use FP16S #define", cxxopts::value<bool>()->default_value("false"))
         ("FP16C", "Use FP16C #define", cxxopts::value<bool>()->default_value("false"))
 
+        ("D2Q9", "Use D2Q9 #define", cxxopts::value<bool>()->default_value("false"))
+        ("D3Q15", "Use D3Q15 #define", cxxopts::value<bool>()->default_value("false"))
+        ("D3Q19", "Use D3Q19 #define", cxxopts::value<bool>()->default_value("false"))
+        ("D3Q27", "Use D3Q27 #define", cxxopts::value<bool>()->default_value("false"))
+
         ("SRT", "Use SRT #define", cxxopts::value<bool>()->default_value("false"))
         ("TRT", "Use TRT #define", cxxopts::value<bool>()->default_value("false"))
         ("floor", "Insert a solid floor", cxxopts::value<bool>()->default_value("false"))
@@ -2751,6 +2757,27 @@ inline vector<string> get_main_arguments(int argc, char* argv[]) {
 
     if(g_args["FP16S"].as<bool>() || g_args["FP16C"].as<bool>()) fpxxsize=16; //  g_args.set_option_value("fpxxsize", "16"); // g_args["fpxxsize"] = cxxopts::value<unsigned int>()->default_value("16");
     else fpxxsize=32; // g_args.set_option_value("fpxxsize", "32"); //g_args["fpxxsize"] = cxxopts::value<unsigned int>()->default_value("32");
+
+    if (g_args["D2Q9"].as<bool>()) {
+	velocity_set = 9u;
+	dimensions = 2u;
+	transfers = 3u;
+    } else if (g_args["D3Q15"].as<bool>()) {
+	velocity_set = 15u;
+	dimensions = 3u;
+	transfers = 5u;
+    } else if (g_args["D3Q19"].as<bool>()) {
+	velocity_set = 19u;
+	dimensions = 3u;
+	transfers = 5u;
+    } else if (g_args["D3Q27"].as<bool>()) {
+	velocity_set = 27u;
+	dimensions = 3u;
+	transfers = 9u;
+    } else {
+        std::cerr << "Must pick one of --D3Q15 --D3Q19 --D3Q27 or --D2Q9" << std::endl;
+        exit(1);
+    }
 
 
 /*

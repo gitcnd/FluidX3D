@@ -4,6 +4,11 @@
 
 Units units; // for unit conversion
 
+uint velocity_set;
+uint dimensions;
+uint transfers;
+
+/*
 #if defined(D2Q9)
 const uint velocity_set = 9u;
 const uint dimensions = 2u;
@@ -21,6 +26,7 @@ const uint velocity_set = 27u;
 const uint dimensions = 3u;
 const uint transfers = 9u;
 #endif // D3Q27
+*/
 
 uint bytes_per_cell_host() { // returns the number of Bytes per cell allocated in host memory
 	uint bytes_per_cell = 17u; // rho, u, flags
@@ -330,6 +336,27 @@ string LBM_Domain::device_defines() const { return
 
 	"\n	#define def_c 0.57735027f" // lattice speed of sound c = 1/sqrt(3)*dt
 	"\n	#define def_w " +to_string(1.0f/get_tau())+"f" // relaxation rate w = dt/tau = dt/(nu/c^2+dt/2) = 1/(3*nu+1/2)
+
+	+ (g_args["D2Q9"].as<bool>() ? 
+	"\n	#define def_w0 (1.0f/2.25f)" // center (0)
+	"\n	#define def_ws (1.0f/9.0f)" // straight (1-4)
+	"\n	#define def_we (1.0f/36.0f)" // edge (5-8)
+	: g_args["D3Q15"].as<bool>() ? 
+	"\n	#define def_w0 (1.0f/4.5f)" // center (0)
+	"\n	#define def_ws (1.0f/9.0f)" // straight (1-6)
+	"\n	#define def_wc (1.0f/72.0f)" // corner (7-14)
+	: g_args["D3Q19"].as<bool>() ? 
+	"\n	#define def_w0 (1.0f/3.0f)" // center (0)
+	"\n	#define def_ws (1.0f/18.0f)" // straight (1-6)
+	"\n	#define def_we (1.0f/36.0f)" // edge (7-18)
+	: g_args["D3Q27"].as<bool>() ? 
+	"\n	#define def_w0 (1.0f/3.375f)" // center (0)
+	"\n	#define def_ws (1.0f/13.5f)" // straight (1-6)
+	"\n	#define def_we (1.0f/54.0f)" // edge (7-18)
+	"\n	#define def_wc (1.0f/216.0f)" // corner (19-26)
+        : "" ) +
+
+/*
 #if defined(D2Q9)
 	"\n	#define def_w0 (1.0f/2.25f)" // center (0)
 	"\n	#define def_ws (1.0f/9.0f)" // straight (1-4)
@@ -348,6 +375,7 @@ string LBM_Domain::device_defines() const { return
 	"\n	#define def_we (1.0f/54.0f)" // edge (7-18)
 	"\n	#define def_wc (1.0f/216.0f)" // corner (19-26)
 #endif // D3Q27
+*/
 
         + (g_args["SRT"].as<bool>() ? "\n     #define SRT" :    // cnd - was #if defined(SRT)
            g_args["TRT"].as<bool>() ? "\n     #define TRT" : "") + // cnd - was #if defined(SRT)
@@ -491,11 +519,15 @@ void LBM_Domain::Graphics::allocate(Device& device) {
 	kernel_graphics_flags_mc = Kernel(device, lbm->get_N(), "graphics_flags_mc", camera_parameters, bitmap, zbuffer, lbm->flags);
 	kernel_graphics_field = Kernel(device, lbm->get_D()==1u ? camera.width*camera.height : lbm->get_N(), lbm->get_D()==1u ? "graphics_field_rt" : "graphics_field", camera_parameters, bitmap, zbuffer, 0, lbm->rho, lbm->u, lbm->flags); // raytraced field visualization only works for single-GPU
 	kernel_graphics_field_slice = Kernel(device, lbm->get_N(), "graphics_field_slice", camera_parameters, bitmap, zbuffer, 0, 0, 0, 0, 0, lbm->rho, lbm->u, lbm->flags);
+	if(!g_args["D2Q9"].as<bool>()) kernel_graphics_streamline = Kernel(device, (lbm->get_Nx()/GRAPHICS_STREAMLINE_SPARSE)*(lbm->get_Ny()/GRAPHICS_STREAMLINE_SPARSE)*(lbm->get_Nz()/GRAPHICS_STREAMLINE_SPARSE), "graphics_streamline", camera_parameters, bitmap, zbuffer, 0, 0, 0, 0, 0, lbm->rho, lbm->u, lbm->flags); // 3D
+	else kernel_graphics_streamline = Kernel(device, (lbm->get_Nx()/GRAPHICS_STREAMLINE_SPARSE)*(lbm->get_Ny()/GRAPHICS_STREAMLINE_SPARSE), "graphics_streamline", camera_parameters, bitmap, zbuffer, 0, 0, 0, 0, 0, lbm->rho, lbm->u, lbm->flags); // 2D
+/*
 #ifndef D2Q9
 	kernel_graphics_streamline = Kernel(device, (lbm->get_Nx()/GRAPHICS_STREAMLINE_SPARSE)*(lbm->get_Ny()/GRAPHICS_STREAMLINE_SPARSE)*(lbm->get_Nz()/GRAPHICS_STREAMLINE_SPARSE), "graphics_streamline", camera_parameters, bitmap, zbuffer, 0, 0, 0, 0, 0, lbm->rho, lbm->u, lbm->flags); // 3D
 #else // D2Q9
 	kernel_graphics_streamline = Kernel(device, (lbm->get_Nx()/GRAPHICS_STREAMLINE_SPARSE)*(lbm->get_Ny()/GRAPHICS_STREAMLINE_SPARSE), "graphics_streamline", camera_parameters, bitmap, zbuffer, 0, 0, 0, 0, 0, lbm->rho, lbm->u, lbm->flags); // 2D
 #endif // D2Q9
+*/
 	kernel_graphics_q = Kernel(device, lbm->get_N(), "graphics_q", camera_parameters, bitmap, zbuffer, 0, lbm->rho, lbm->u);
 
 //cnd #ifdef FORCE_FIELD
@@ -806,9 +838,9 @@ void LBM::sanity_checks_constructor(const vector<Device_Info>& device_infos, con
 	}
 	if(nu==0.0f) print_error("Viscosity cannot be 0. Change it in setup.cpp."); // sanity checks for viscosity
 	else if(nu<0.0f) print_error("Viscosity cannot be negative. Remove the \"-\" in setup.cpp.");
-#ifdef D2Q9
-	if(Nz!=1u) print_error("D2Q9 is the 2D velocity set. You have to set Nz=1u in the LBM constructor! Currently you have set Nz="+to_string(Nz)+"u.");
-#endif // D2Q9
+//cnd #ifdef D2Q9
+	if(g_args["D2Q9"].as<bool>() && Nz!=1u) print_error("D2Q9 is the 2D velocity set. You have to set Nz=1u in the LBM constructor! Currently you have set Nz="+to_string(Nz)+"u.");
+//cnd #endif // D2Q9
 
 	if(!g_args["SRT"].as<bool>() && !g_args["TRT"].as<bool>()) print_error("No LBM collision operator selected. Uncomment either \"#define SRT\" or \"#define TRT\" in defines.hpp");
 	else if(g_args["SRT"].as<bool>() && g_args["TRT"].as<bool>()) print_error("Too many LBM collision operators selected. Comment out either \"#define SRT\" or \"#define TRT\" in defines.hpp");
