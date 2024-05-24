@@ -36,7 +36,7 @@ uint bytes_per_cell_host() { // returns the number of Bytes per cell allocated i
 	return bytes_per_cell;
 }
 uint bytes_per_cell_device() { // returns the number of Bytes per cell allocated in device memory
-	uint bytes_per_cell = velocity_set*sizeof(fpxx)+17u; // fi, rho, u, flags
+	uint bytes_per_cell = velocity_set*fpxxsize+17u; // fi, rho, u, flags
 //cnd #ifdef FORCE_FIELD
 	if(g_args["FORCE_FIELD"].as<bool>()) bytes_per_cell += 12u; // F
 //cnd #endif // FORCE_FIELD
@@ -44,12 +44,12 @@ uint bytes_per_cell_device() { // returns the number of Bytes per cell allocated
 	if(g_args["SURFACE"].as<bool>()) bytes_per_cell += 12u; // phi, mass, flags
 //cnd #endif // SURFACE
 //cnd #ifdef TEMPERATURE
-	if(g_args["TEMPERATURE"].as<bool>()) bytes_per_cell += 7u*sizeof(fpxx)+4u; // gi, T
+	if(g_args["TEMPERATURE"].as<bool>()) bytes_per_cell += 7u*fpxxsize+4u; // gi, T
 //cnd #endif // TEMPERATURE
 	return bytes_per_cell;
 }
 uint bandwidth_bytes_per_cell_device() { // returns the bandwidth in Bytes per cell per time step from/to device memory
-	uint bandwidth_bytes_per_cell = velocity_set*2u*sizeof(fpxx)+1u; // lattice.set()*2*fi, flags
+	uint bandwidth_bytes_per_cell = velocity_set*2u*fpxxsize+1u; // lattice.set()*2*fi, flags
 //cnd #ifdef UPDATE_FIELDS
 	if(g_args["UPDATE_FIELDS"].as<bool>()) bandwidth_bytes_per_cell += 16u; // rho, u
 //cnd #endif // UPDATE_FIELDS
@@ -60,10 +60,10 @@ uint bandwidth_bytes_per_cell_device() { // returns the bandwidth in Bytes per c
 	if( g_args["MOVING_BOUNDARIES"].as<bool>() || g_args["SURFACE"].as<bool>() || g_args["TEMPERATURE"].as<bool>() ) bandwidth_bytes_per_cell += (velocity_set-1u)*1u; // neighbor flags have to be loaded
 //cnd #endif // MOVING_BOUNDARIES, SURFACE or TEMPERATURE
 //cnd #ifdef SURFACE
-	if(g_args["SURFACE"].as<bool>()) bandwidth_bytes_per_cell += (1u+(2u*velocity_set-1u)*sizeof(fpxx)+8u+(velocity_set-1u)*4u) + 1u + 1u + (4u+velocity_set+4u+4u+4u); // surface_0 (flags, fi, mass, massex), surface_1 (flags), surface_2 (flags), surface_3 (rho, flags, mass, massex, phi)
+	if(g_args["SURFACE"].as<bool>()) bandwidth_bytes_per_cell += (1u+(2u*velocity_set-1u)*fpxxsize+8u+(velocity_set-1u)*4u) + 1u + 1u + (4u+velocity_set+4u+4u+4u); // surface_0 (flags, fi, mass, massex), surface_1 (flags), surface_2 (flags), surface_3 (rho, flags, mass, massex, phi)
 //cnd #endif // SURFACE
 //cnd #ifdef TEMPERATURE
-	if(g_args["TEMPERATURE"].as<bool>()) bandwidth_bytes_per_cell += 7u*2u*sizeof(fpxx)+4u; // 2*gi, T
+	if(g_args["TEMPERATURE"].as<bool>()) bandwidth_bytes_per_cell += 7u*2u*fpxxsize+4u; // 2*gi, T
 //cnd #endif // TEMPERATURE
 	return bandwidth_bytes_per_cell;
 }
@@ -110,7 +110,8 @@ LBM_Domain::LBM_Domain(const Device_Info& device_info, const uint Nx, const uint
 
 void LBM_Domain::allocate(Device& device) {
 	const ulong N = get_N();
-	fi = Memory<fpxx>(device, N, velocity_set, false);
+	if(g_args["FP16S"].as<bool>() || g_args["FP16C"].as<bool>()) fi = Memory<fpxx>(device, N/2, velocity_set, false); // ushort (fpxx16) is half the size of float (fpxx)
+	else fi = Memory<fpxx>(device, N, velocity_set, false);
 	rho = Memory<float>(device, N, 1u, true, true, 1.0f);
 	u = Memory<float>(device, N, 3u);
 	flags = Memory<uchar>(device, N);
@@ -148,7 +149,8 @@ void LBM_Domain::allocate(Device& device) {
 
 //cnd #ifdef TEMPERATURE
 	if(g_args["TEMPERATURE"].as<bool>()) {
-	gi = Memory<fpxx>(device, N, 7u, false);
+	if(g_args["FP16S"].as<bool>() || g_args["FP16C"].as<bool>()) gi = Memory<fpxx>(device, N/2, 7u, false); // reinterpret_cast<fpxx*>(Memory<fpxx16>(device, N, 7u, false));
+	else							     gi = Memory<fpxx>(device, N, 7u, false);
 	T = Memory<float>(device, N, 1u, true, true, 1.0f);
 	kernel_initialize.add_parameters(gi, T);
 	kernel_stream_collide.add_parameters(gi, T);
@@ -1104,7 +1106,7 @@ void LBM::write_status(const string& path) { // write LBM status report to a .tx
 	status += "Grid Resolution = ("+to_string(Nx)+", "+to_string(Ny)+", "+to_string(Nz)+")\n";
 	status += "LBM type = D"+string(get_velocity_set()==9 ? "2" : "3")+"Q"+to_string(get_velocity_set())+" "+info.collision+"\n";
 	status += "Memory Usage = "+to_string(info.cpu_mem_required)+" MB (CPU), "+to_string(info.gpu_mem_required)+" MB (GPU)\n";
-	status += "Maximum Allocation Size = "+to_string((uint)(get_N()/(ulong)get_D()*(ulong)(get_velocity_set()*sizeof(fpxx))/1048576ull))+" MB\n";
+	status += "Maximum Allocation Size = "+to_string((uint)(get_N()/(ulong)get_D()*(ulong)(get_velocity_set()*fpxxsize)/1048576ull))+" MB\n";
 	status += "Time Step = "+to_string(get_t())+" / "+(info.steps==max_ulong ? "infinite" : to_string(info.steps))+"\n";
 	status += "Runtime = "+print_time(info.runtime_total)+" (total) = "+print_time(info.runtime_lbm)+" (LBM) + "+print_time(info.runtime_total-info.runtime_lbm)+" (rendering and data evaluation)\n";
 	status += "Kinematic Viscosity = "+to_string(get_nu())+"\n";
@@ -1365,8 +1367,8 @@ void LBM_Domain::allocate_transfer(Device& device) { // allocate all memory for 
 	if(Dy>1u) Amax = max(Amax, (ulong)Nz*(ulong)Nx); // Ay
 	if(Dz>1u) Amax = max(Amax, (ulong)Nx*(ulong)Ny); // Az
 
-	transfer_buffer_p = Memory<char>(device, Amax, max(transfers*(uint)sizeof(fpxx), 17u)); // only allocate one set of transfer buffers in plus/minus directions, for all x/y/z transfers
-	transfer_buffer_m = Memory<char>(device, Amax, max(transfers*(uint)sizeof(fpxx), 17u));
+	transfer_buffer_p = Memory<char>(device, Amax, max(transfers*(uint)fpxxsize, 17u)); // only allocate one set of transfer buffers in plus/minus directions, for all x/y/z transfers
+	transfer_buffer_m = Memory<char>(device, Amax, max(transfers*(uint)fpxxsize, 17u));
 
 	kernel_transfer[enum_transfer_field::fi              ][0] = Kernel(device, 0u, "transfer_extract_fi"              , 0u, t, transfer_buffer_p, transfer_buffer_m, fi);
 	kernel_transfer[enum_transfer_field::fi              ][1] = Kernel(device, 0u, "transfer__insert_fi"              , 0u, t, transfer_buffer_p, transfer_buffer_m, fi);
@@ -1437,7 +1439,7 @@ void LBM::communicate_field(const enum_transfer_field field, const uint bytes_pe
 }
 
 void LBM::communicate_fi() {
-	communicate_field(enum_transfer_field::fi, transfers*sizeof(fpxx));
+	communicate_field(enum_transfer_field::fi, transfers*fpxxsize);
 }
 void LBM::communicate_rho_u_flags() {
 	communicate_field(enum_transfer_field::rho_u_flags, 17u);
@@ -1452,7 +1454,7 @@ void LBM::communicate_phi_massex_flags() {
 //cnd #endif // SURFACE
 //cnd #ifdef TEMPERATURE
 void LBM::communicate_gi() {
-	communicate_field(enum_transfer_field::gi, sizeof(fpxx));
+	communicate_field(enum_transfer_field::gi, fpxxsize);
 }
 void LBM::communicate_T() {
 	communicate_field(enum_transfer_field::T, 4u);

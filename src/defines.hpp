@@ -48,8 +48,9 @@
 //#define DEMO_THERMAL_CONVECTION //cnd
 
 /*
-	FP16S
-	FP16C
+      *	FP16S							Done
+      *	FP16C							Done
+
 	fpxx   (FP16S|FP16C) ? ushort : float
 
 	D2Q9
@@ -174,11 +175,16 @@
 #define VIS_PHI_RAYTRACE  0b01000000
 #define VIS_PARTICLES     0b10000000
 
+
+#define fpxx16 ushort	// for FP16S and FP16C
+#define fpxx float	// for FP32
+/*
 #if defined(FP16S) || defined(FP16C)
 #define fpxx ushort
 #else // FP32
 #define fpxx float
 #endif // FP32
+*/
 
 #ifdef BENCHMARK
 #undef UPDATE_FIELDS

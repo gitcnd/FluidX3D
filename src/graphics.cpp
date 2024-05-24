@@ -15,7 +15,8 @@ Camera camera;
 //bool key_N=false, key_O=false, key_P=false, key_Q=false, key_R=false, key_S=false, key_T=false, key_U=false, key_V=false, key_W=false, key_X=false, key_Y=false, key_Z=false;
 bool key_E=false, key_G=false, key_H=false, key_O=false, key_Q=false, key_T=false, key_Z=false;
 bool key_1=false, key_2=false, key_3=false, key_4=false, key_5=false, key_6=false, key_7=false, key_8=false, key_9=false, key_0=false;
-extern bool key_P= false; // !g_args["pause"].as<bool>()
+bool key_P= false; // !g_args["pause"].as<bool>()
+//extern bool key_P= false; // !g_args["pause"].as<bool>()
 //extern bool key_O= false; // !g_args["pause"].as<bool>()
 
 

@@ -58,6 +58,7 @@ typedef uint64_t ulong;
 
 #include "cxxopts.hpp"
 extern cxxopts::ParseResult g_args;
+extern int fpxxsize;
 //extern Info info; // declared in info.cpp
 extern bool key_P;
 
@@ -2747,6 +2748,10 @@ inline vector<string> get_main_arguments(int argc, char* argv[]) {
     }
 
     if (!g_args["pause"].as<bool>()) key_P= true;
+
+    if(g_args["FP16S"].as<bool>() || g_args["FP16C"].as<bool>()) fpxxsize=16; //  g_args.set_option_value("fpxxsize", "16"); // g_args["fpxxsize"] = cxxopts::value<unsigned int>()->default_value("16");
+    else fpxxsize=32; // g_args.set_option_value("fpxxsize", "32"); //g_args["fpxxsize"] = cxxopts::value<unsigned int>()->default_value("32");
+
 
 /*
         if (g_args.count("file")) {
