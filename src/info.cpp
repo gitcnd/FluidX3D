@@ -16,13 +16,13 @@ void Info::initialize(LBM* lbm) {
 #endif // TRT
 */
 
-#if defined(FP16S)
-	collision += " (FP32/FP16S)";
-#elif defined(FP16C)
-	collision += " (FP32/FP16C)";
-#else // FP32
-	collision += " (FP32/FP32)";
-#endif // FP32
+//cnd #if defined(FP16S)
+	if(g_args["FP16S"].as<bool>()) collision += " (FP32/FP16S)";
+//cnd #elif defined(FP16C)
+	else if(g_args["FP16C"].as<bool>()) collision += " (FP32/FP16C)";
+//cnd #else // FP32
+	else collision += " (FP32/FP32)";
+//cnd #endif // FP32
 	cpu_mem_required = (uint)(lbm->get_N()*(ulong)bytes_per_cell_host()/1048576ull); // reset to get valid values for consecutive simulations
 	gpu_mem_required = lbm->lbm_domain[0]->get_device().info.memory_used;
 	print_info("Allocating memory. This may take a few seconds.");

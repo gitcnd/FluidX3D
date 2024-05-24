@@ -2690,7 +2690,7 @@ inline vector<string> get_main_arguments(int argc, char* argv[]) {
         ("c,cord", "Cord (length of STL) in meters", cxxopts::value<float>()->default_value("1.0"))
         ("t,time", "Time", cxxopts::value<unsigned int>()->default_value("10000"))
         ("scale", "Scale", cxxopts::value<float>()->default_value("0.9"))
-        ("a,aoa", "Angle of attack", cxxopts::value<float>()->default_value("-5.0"))
+        ("a,aoa", "Angle of attack degrees (- to climb)", cxxopts::value<float>()->default_value("0.0"))
         ("camx", "Camera X", cxxopts::value<float>()->default_value("19.0"))
         ("camy", "Camera Y", cxxopts::value<float>()->default_value("19.1"))
         ("camz", "Camera Z", cxxopts::value<float>()->default_value("19.2"))
@@ -2715,6 +2715,8 @@ inline vector<string> get_main_arguments(int argc, char* argv[]) {
         ("EQUILIBRIUM_BOUNDARIES", "Use EQUILIBRIUM_BOUNDARIES #define", cxxopts::value<bool>()->default_value("false"))
         ("SURFACE", "Use SURFACE #define", cxxopts::value<bool>()->default_value("false"))
         ("GRAPHICS", "Use GRAPHICS #define", cxxopts::value<bool>()->default_value("false"))
+        ("FP16S", "Use FP16S #define", cxxopts::value<bool>()->default_value("false"))
+        ("FP16C", "Use FP16C #define", cxxopts::value<bool>()->default_value("false"))
 
         ("SRT", "Use SRT #define", cxxopts::value<bool>()->default_value("false"))
         ("TRT", "Use TRT #define", cxxopts::value<bool>()->default_value("false"))

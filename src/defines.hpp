@@ -8,7 +8,7 @@
 //#define DEMO_CONCORDE
 //#define DEMO_3D_TAYLOR_GREEN_VORTICES
 //#define DEMO_NASA_COMMON_RESEARCH_MODEL
-//#define DEMO_2D_TAYLOR-GREEN_VORTICES //cnd
+//#define DEMO_2D_TAYLOR_GREEN_VORTICES //cnd
 //#define DEMO_POISEUILLE_FLOW //cnd
 //#define DEMO_STOKES_DRAG //cnd
 //#define DEMO_CYLINDER_IN_RECTANGULAR_DUCT //cnd
@@ -65,12 +65,12 @@
       *	FORCE_FIELD						Done
       *	EQUILIBRIUM_BOUNDARIES					Done
       *	MOVING_BOUNDARIES					Done
-	SURFACE (req: UPDATE_FIELDS)						unfinished
+      *	SURFACE (req: UPDATE_FIELDS)				Done
       *	SUBGRID							Done
       *	PARTICLES (req: UPDATE_FIELDS)				Done
       *	UPDATE_FIELDS						Done
 
-	GRAPHICS
+	GRAPHICS						Incomplete
 	INTERACTIVE_GRAPHICS_ASCII (req: GRAPHICS)
 	INTERACTIVE_GRAPHICS (req: GRAPHICS)
 
@@ -84,44 +84,44 @@
 
 
 //#define FP16S // compress LBM DDFs to range-shifted IEEE-754 FP16; number conversion is done in hardware; all arithmetic is still done in FP32
-#define FP16C // compress LBM DDFs to more accurate custom FP16C format; number conversion is emulated in software; all arithmetic is still done in FP32
+//cnd inlined #define FP16C // compress LBM DDFs to more accurate custom FP16C format; number conversion is emulated in software; all arithmetic is still done in FP32
 
 //#define D2Q9 // choose D2Q9 velocity set for 2D; allocates 53 (FP32) or 35 (FP16) Bytes/cell
 //#define D3Q15 // choose D3Q15 velocity set for 3D; allocates 77 (FP32) or 47 (FP16) Bytes/cell
 #define D3Q19 // choose D3Q19 velocity set for 3D; allocates 93 (FP32) or 55 (FP16) Bytes/cell; (default)
 //#define D3Q27 // choose D3Q27 velocity set for 3D; allocates 125 (FP32) or 71 (FP16) Bytes/cell
 
-#define SRT // choose single-relaxation-time LBM collision operator; (default)
-//#define TRT // choose two-relaxation-time LBM collision operator
+//cnd inlined #define SRT // choose single-relaxation-time LBM collision operator; (default)
+//cnd inlined //#define TRT // choose two-relaxation-time LBM collision operator
 
 #if defined(DEMO_CONCORDE) || defined(DEMO_BOEING_747) || defined(DEMO_CND_GLIDER) || defined(DEMO_DELTA_WING) || defined(DEMO_RADIAL_FAN) || defined(DEMO_ELECTRIC_DUCTED_FAN) || defined(DEMO_SPACE_SHUTTLE) || defined(DEMO_CESSNA_172) || defined(DEMO_AERODYNAMIC_COW) || defined(DEMO_DAM_BREAK) || defined(DEMO_CND_WING)
-#define FP16S // compress LBM DDFs to range-shifted IEEE-754 FP16; number conversion is done in hardware; all arithmetic is still done in FP32
+//cnd inlined #define FP16S // compress LBM DDFs to range-shifted IEEE-754 FP16; number conversion is done in hardware; all arithmetic is still done in FP32
 #endif
 #if defined(DEMO_NASA_COMMON_RESEARCH_MODEL) || defined(DEMO_RAINDROP_IMPACT)
-#define FP16C // compress LBM DDFs to more accurate custom FP16C format; number conversion is emulated in software; all arithmetic is still done in FP32
+//cnd inlined #define FP16C // compress LBM DDFs to more accurate custom FP16C format; number conversion is emulated in software; all arithmetic is still done in FP32
 #endif
 
 #if defined(DEMO_PARTICLE_TEST) || defined(DEMO_RAINDROP_IMPACT) || defined(DEMO_DAM_BREAK)
-#define VOLUME_FORCE // enables global force per volume in one direction (equivalent to a pressure gradient); specified in the LBM class constructor; the force can be changed on-the-fly between time steps at no performance cost
+//cnd inlined #define VOLUME_FORCE // enables global force per volume in one direction (equivalent to a pressure gradient); specified in the LBM class constructor; the force can be changed on-the-fly between time steps at no performance cost
 #endif
 #if defined(DEMO_STOKES_DRAG) || defined(DEMO_PARTICLE_TEST)
-#define FORCE_FIELD // enables computing the forces on solid boundaries with lbm.calculate_force_on_boundaries(); and enables setting the force for each lattice point independently (enable VOLUME_FORCE too); allocates an extra 12 Bytes/cell
+//cnd inlined #define FORCE_FIELD // enables computing the forces on solid boundaries with lbm.calculate_force_on_boundaries(); and enables setting the force for each lattice point independently (enable VOLUME_FORCE too); allocates an extra 12 Bytes/cell
 #endif
 #if defined(DEMO_CONCORDE) || defined(DEMO_NASA_COMMON_RESEARCH_MODEL) || defined(DEMO_BOEING_747) || defined(DEMO_CND_GLIDER) || defined(DEMO_STOKES_DRAG) || defined(DEMO_DELTA_WING) || defined(DEMO_ELECTRIC_DUCTED_FAN) || defined(DEMO_SPACE_SHUTTLE) || defined(DEMO_RAINDROP_IMPACT) || defined(DEMO_CESSNA_172) || defined(DEMO_AERODYNAMIC_COW) || defined(DEMO_CND_WING)
-#define EQUILIBRIUM_BOUNDARIES // enables fixing the velocity/density by marking cells with TYPE_E; can be used for inflow/outflow; does not reflect shock waves
+//cnd inlined #define EQUILIBRIUM_BOUNDARIES // enables fixing the velocity/density by marking cells with TYPE_E; can be used for inflow/outflow; does not reflect shock waves
 #endif
 #if defined(DEMO_PARTICLE_TEST) || defined(DEMO_RADIAL_FAN) || defined(DEMO_ELECTRIC_DUCTED_FAN) || defined(DEMO_CESSNA_172)
-#define MOVING_BOUNDARIES // enables moving solids: set solid cells to TYPE_S and set their velocity u unequal to zero
+//cnd inlined #define MOVING_BOUNDARIES // enables moving solids: set solid cells to TYPE_S and set their velocity u unequal to zero
 #endif
 #if defined(DEMO_RAINDROP_IMPACT) || defined(DEMO_DAM_BREAK)
-#define SURFACE // enables free surface LBM: mark fluid cells with TYPE_F; at initialization the TYPE_I interface and TYPE_G gas domains will automatically be completed; allocates an extra 12 Bytes/cell
+//cnd inlined #define SURFACE // enables free surface LBM: mark fluid cells with TYPE_F; at initialization the TYPE_I interface and TYPE_G gas domains will automatically be completed; allocates an extra 12 Bytes/cell
 #endif
 //#define TEMPERATURE // enables temperature extension; set fixed-temperature cells with TYPE_T (similar to EQUILIBRIUM_BOUNDARIES); allocates an extra 32 (FP32) or 18 (FP16) Bytes/cell
 #if defined(DEMO_CONCORDE) || defined(DEMO_NASA_COMMON_RESEARCH_MODEL) || defined(DEMO_BOEING_747) || defined(DEMO_CND_GLIDER) || defined(DEMO_DELTA_WING) || defined(DEMO_RADIAL_FAN) || defined(DEMO_ELECTRIC_DUCTED_FAN) || defined(DEMO_SPACE_SHUTTLE) || defined(DEMO_CESSNA_172) || defined(DEMO_AERODYNAMIC_COW) || defined(DEMO_CND_WING)
-#define SUBGRID // enables Smagorinsky-Lilly subgrid turbulence LES model to keep simulations with very large Reynolds number stable
+//cnd inlined #define SUBGRID // enables Smagorinsky-Lilly subgrid turbulence LES model to keep simulations with very large Reynolds number stable
 #endif
 #if defined(DEMO_PARTICLE_TEST)
-#define PARTICLES // enables particles with immersed-boundary method (for 2-way coupling also activate VOLUME_FORCE and FORCE_FIELD; only supported in single-GPU)
+//cnd inlined #define PARTICLES // enables particles with immersed-boundary method (for 2-way coupling also activate VOLUME_FORCE and FORCE_FIELD; only supported in single-GPU)
 #endif
 
 

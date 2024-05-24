@@ -60,7 +60,7 @@ void main_setup() { // 3D Taylor-Green vortices; 					required extensions in def
 #endif //cnd
 
 
-#ifdef DEMO_2D_TAYLOR-GREEN_VORTICES //cnd
+#ifdef DEMO_2D_TAYLOR_GREEN_VORTICES //cnd
 void main_setup() { // 2D Taylor-Green vortices (use D2Q9); 				required extensions in defines.hpp: INTERACTIVE_GRAPHICS
 	// ################################################################## define simulation box size, viscosity and volume force ###################################################################
 	LBM lbm(1024u, 1024u, 1u, 0.02f);
@@ -1588,6 +1588,10 @@ void main_setup() { // input parameter drivern sim; 					required extensions in 
 	float3x3 rotation = float3x3(float3(1, 0, 0), radians(g_args["rotx"].as<float>()));
 	rotation = rotation * float3x3(float3(0, 1, 0), radians(g_args["roty"].as<float>()));
 	rotation = rotation * float3x3(float3(0, 0, 1), radians(g_args["rotz"].as<float>()));
+
+	// rotation = rotation * float3x3(float3(1, 0, 0), radians( g_args["aoa"].as<float>() )); // about "X" has the effect of "dropping a wing" (rotates around the prop axis)
+	// rotation = rotation * float3x3(float3(0, 1, 0), radians( g_args["aoa"].as<float>() )); // about "Y" causes it to Yaw
+	rotation = rotation * float3x3(float3(0, 0, 1), radians( g_args["aoa"].as<float>() )); // angle it how they asked (- to climb)
 
 	//Mesh* mesh = read_stl(get_exe_path()+"../stl/Cow_t.stl", lbm.size(), lbm.center(), rotation, lbm_length); // https://www.thingiverse.com/thing:182114/files
 	Mesh* mesh = read_stl(g_args["f"].as<std::string>(), lbm.size(), lbm.center(), rotation, lbm_length); 

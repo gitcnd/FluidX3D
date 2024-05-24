@@ -374,6 +374,25 @@ string LBM_Domain::device_defines() const { return
 	"\n	#define TYPE_GI 0x38" // 0b00111000 // change from gas to interface
 	"\n	#define TYPE_SU 0x38" // 0b00111000 // any flag bit used for SURFACE
 
+	
+        + (g_args["FP16S"].as<bool>() ?    // cnd - was #if defined(FP16S)
+	"\n	#define fpxx half" // switchable data type (scaled IEEE-754 16-bit floating-point format: 1-5-10, exp-30, +-1.99902344, +-1.86446416E-9, +-1.81898936E-12, 3.311 digits)
+	"\n	#define fpxx_copy ushort" // switchable data type for direct copying (scaled IEEE-754 16-bit floating-point format: 1-5-10, exp-30, +-1.99902344, +-1.86446416E-9, +-1.81898936E-12, 3.311 digits)
+	"\n	#define load(p,o) vload_half(o,p)*3.0517578E-5f" // special function for loading half
+	"\n	#define store(p,o,x) vstore_half_rte((x)*32768.0f,o,p)" // special function for storing half
+         : g_args["FP16C"].as<bool>() ?  // cnd - was #elif defined(FP16C)
+	"\n	#define fpxx ushort" // switchable data type (custom 16-bit floating-point format: 1-4-11, exp-15, +-1.99951168, +-6.10351562E-5, +-2.98023224E-8, 3.612 digits), 12.5% slower than IEEE-754 16-bit
+	"\n	#define fpxx_copy ushort" // switchable data type for direct copying (custom 16-bit floating-point format: 1-4-11, exp-15, +-1.99951168, +-6.10351562E-5, +-2.98023224E-8, 3.612 digits), 12.5% slower than IEEE-754 16-bit
+	"\n	#define load(p,o) half_to_float_custom(p[o])" // special function for loading half
+	"\n	#define store(p,o,x) p[o]=float_to_half_custom(x)" // special function for storing half
+         : 
+	"\n	#define fpxx float" // switchable data type (regular 32-bit float)
+	"\n	#define fpxx_copy float" // switchable data type for direct copying (regular 32-bit float)
+	"\n	#define load(p,o) p[o]" // regular float read
+	"\n	#define store(p,o,x) p[o]=x" // regular float write
+	) +
+
+/*
 #if defined(FP16S)
 	"\n	#define fpxx half" // switchable data type (scaled IEEE-754 16-bit floating-point format: 1-5-10, exp-30, +-1.99902344, +-1.86446416E-9, +-1.81898936E-12, 3.311 digits)
 	"\n	#define fpxx_copy ushort" // switchable data type for direct copying (scaled IEEE-754 16-bit floating-point format: 1-5-10, exp-30, +-1.99902344, +-1.86446416E-9, +-1.81898936E-12, 3.311 digits)
@@ -390,8 +409,9 @@ string LBM_Domain::device_defines() const { return
 	"\n	#define load(p,o) p[o]" // regular float read
 	"\n	#define store(p,o,x) p[o]=x" // regular float write
 #endif // FP32
+*/
 
-	+ (g_args["UPDATE_FIELDS"].as<bool>() ? "\n     #define UPDATE_FIELDS" : "") + // cnd - was #ifdef UPDATE_FIELDS
+	  (g_args["UPDATE_FIELDS"].as<bool>() ? "\n     #define UPDATE_FIELDS" : "") + // cnd - was #ifdef UPDATE_FIELDS
 /*
 #ifdef UPDATE_FIELDS
 	"\n	#define UPDATE_FIELDS"
@@ -772,12 +792,14 @@ void LBM::sanity_checks_constructor(const vector<Device_Info>& device_infos, con
 		float factor = cbrt((float)memory_available/(float)memory_required);
 		const uint maxNx=(uint)(factor*(float)Nx), maxNy=(uint)(factor*(float)Ny), maxNz=(uint)(factor*(float)Nz);
 		string message = "Grid resolution ("+to_string(Nx)+", "+to_string(Ny)+", "+to_string(Nz)+") is too large: "+to_string(Dx*Dy*Dz)+"x "+to_string(memory_required)+" MB required, "+to_string(Dx*Dy*Dz)+"x "+to_string(memory_available)+" MB available. Largest possible resolution is ("+to_string(maxNx)+", "+to_string(maxNy)+", "+to_string(maxNz)+"). Restart the simulation with lower resolution or on different device(s) with more memory.";
-#if !defined(FP16S)&&!defined(FP16C)
+//cnd #if !defined(FP16S)&&!defined(FP16C)
+		if(!g_args["FP16S"].as<bool>() && !g_args["FP16C"].as<bool>()) {
 		uint memory_required_fp16 = (uint)((ulong)Nx*(ulong)Ny*(ulong)Nz/((ulong)(Dx*Dy*Dz))*(ulong)(bytes_per_cell_device()-velocity_set*2u)/1048576ull); // in MB
 		float factor_fp16 = cbrt((float)memory_available/(float)memory_required_fp16);
 		const uint maxNx_fp16=(uint)(factor_fp16*(float)Nx), maxNy_fp16=(uint)(factor_fp16*(float)Ny), maxNz_fp16=(uint)(factor_fp16*(float)Nz);
 		message += " Consider using FP16S/FP16C memory compression to double maximum grid resolution to a maximum of ("+to_string(maxNx_fp16)+", "+to_string(maxNy_fp16)+", "+to_string(maxNz_fp16)+"); for this, uncomment \"#define FP16S\" or \"#define FP16C\" in defines.hpp.";
-#endif // !FP16S&&!FP16C
+		}
+//cnd #endif // !FP16S&&!FP16C
 		print_error(message);
 	}
 	if(nu==0.0f) print_error("Viscosity cannot be 0. Change it in setup.cpp."); // sanity checks for viscosity
