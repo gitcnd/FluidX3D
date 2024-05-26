@@ -63,6 +63,7 @@ extern int fpxxsize;
 extern bool key_P;
 extern uint velocity_set,dimensions,transfers; // See lbm.cpp
 extern int GRAPHICS_BACKGROUND_COLOR; // for speed - used every frame
+extern std::string EXPORT_PATH;
 
 
 inline void parallel_for(const uint N, const uint threads, std::function<void(uint, uint)> lambda) { // usage: parallel_for(N, threads, [&](uint n, uint t) { ... });
@@ -2660,219 +2661,7 @@ inline string decimal_to_string_double(ulong x, int digits) {
 	return r;
 }
 
-inline vector<string> get_main_arguments(int argc, char* argv[]) {
-	// return argc>1 ? vector<string>(argv+1, argv+argc) : vector<string>();
 
-#if defined(_WIN32)
-        // Adjust arguments to replace / with - for cxxopts
-        std::vector<std::string> args(argv, argv + argc);
-        for (auto& arg : args) { if (arg[0] == '/') { arg[0] = '-'; } }
-        std::vector<char*> new_argv;
-        for (auto& arg : args) { new_argv.push_back(const_cast<char*>(arg.c_str())); }
-#endif
-
-    cxxopts::Options options(argv[0], "Lattice Boltzmann CFD software by Dr. Moritz Lehmann");
-
-    options.add_options()
-        ("h,help", "Print help")
-        ("f,file", "input .stl mesh Filename", cxxopts::value<std::string>()->default_value("input.stl"))
-        ("rotx", "X deg rotation of input mesh", cxxopts::value<float>()->default_value("0.0"))
-        ("roty", "Y deg rotation of input mesh", cxxopts::value<float>()->default_value("0.0"))
-        ("rotz", "Z deg rotation of input mesh", cxxopts::value<float>()->default_value("0.0"))
-
-        ("trx", "X translate input mesh", cxxopts::value<float>()->default_value("0.0"))
-        ("try", "Y translate input mesh", cxxopts::value<float>()->default_value("0.0"))
-        ("trz", "Z translate input mesh", cxxopts::value<float>()->default_value("0.0"))
-
-        ("x", "X width of sim box", cxxopts::value<float>()->default_value("1.0"))
-        ("y", "Y length of sim box", cxxopts::value<float>()->default_value("1.0"))
-        ("z", "Z height of sim box", cxxopts::value<float>()->default_value("1.0"))
-        ("r,resolution", "Resolution", cxxopts::value<unsigned int>()->default_value("4096"))
-        ("re", "Reynolds number", cxxopts::value<float>()->default_value("100000.0"))
-        ("u", "Velocity in m/s", cxxopts::value<float>()->default_value("5.0"))
-        ("c,cord", "Cord (length of STL) in meters", cxxopts::value<float>()->default_value("1.0"))
-        ("t,time", "Time", cxxopts::value<unsigned int>()->default_value("10000"))
-        ("scale", "Scale", cxxopts::value<float>()->default_value("0.9"))
-        ("a,aoa", "Angle of attack degrees (- to climb)", cxxopts::value<float>()->default_value("0.0"))
-        ("camx", "Camera X", cxxopts::value<float>()->default_value("19.0"))
-        ("camy", "Camera Y", cxxopts::value<float>()->default_value("19.1"))
-        ("camz", "Camera Z", cxxopts::value<float>()->default_value("19.2"))
-        ("camzoom", "Camera Zoom", cxxopts::value<float>()->default_value("1.0"))
-        ("camrx", "Camera Rotation X", cxxopts::value<float>()->default_value("33.0"))
-        ("camry", "Camera Rotation Y", cxxopts::value<float>()->default_value("42.0"))
-        ("camfov", "Camera Field of View", cxxopts::value<float>()->default_value("68.0"))
-        ("s,secs", "Seconds", cxxopts::value<float>()->default_value("10.0"))
-        ("w,window", "Enable window instead of fullscreen mode", cxxopts::value<bool>()->default_value("false"))
-        ("wait", "Wait for keypress befor ending", cxxopts::value<bool>()->default_value("false"))
-        ("pause", "Do not auto-start the simulation", cxxopts::value<bool>()->default_value("false"))
-        ("fps", "Frames per Second for video output", cxxopts::value<float>()->default_value("25.0"))
-        ("slomo", "What speed the video plays at 1=realtime 10=10x slower", cxxopts::value<float>()->default_value("1.0"))
-
-        ("SUBGRID", "Use SUBGRID #define", cxxopts::value<bool>()->default_value("false"))
-        ("VOLUME_FORCE", "Use VOLUME_FORCE #define", cxxopts::value<bool>()->default_value("false"))
-        ("FORCE_FIELD", "Use FORCE_FIELD #define", cxxopts::value<bool>()->default_value("false"))
-        ("PARTICLES", "Use PARTICLES #define", cxxopts::value<bool>()->default_value("false"))
-        ("TEMPERATURE", "Use TEMPERATURE #define", cxxopts::value<bool>()->default_value("false"))
-        ("UPDATE_FIELDS", "Use UPDATE_FIELDS #define", cxxopts::value<bool>()->default_value("false"))
-        ("MOVING_BOUNDARIES", "Use MOVING_BOUNDARIES #define", cxxopts::value<bool>()->default_value("false"))
-        ("EQUILIBRIUM_BOUNDARIES", "Use EQUILIBRIUM_BOUNDARIES #define", cxxopts::value<bool>()->default_value("false"))
-        ("SURFACE", "Use SURFACE #define", cxxopts::value<bool>()->default_value("false"))
-        ("FP16S", "Use FP16S #define", cxxopts::value<bool>()->default_value("false"))
-        ("FP16C", "Use FP16C #define", cxxopts::value<bool>()->default_value("false"))
-        ("BENCHMARK", "Run GPU Benchmark. See --FP16C and --FP16S too", cxxopts::value<bool>()->default_value("false"))
-
-        ("GRAPHICS", "Use interactive graphics (see also --window)", cxxopts::value<bool>()->default_value("false"))
-        ("GRAPHICS_ASCII", "Use interactive console (text) graphics", cxxopts::value<bool>()->default_value("false"))
-        ("FRAME_WIDTH", "Screen or Window resolution width", cxxopts::value<int>()->default_value("1920"))
-        ("FRAME_HEIGHT", "Screen or Window resolution height", cxxopts::value<int>()->default_value("1080"))
-        ("BACKGROUND_COLOR", "Screen background color", cxxopts::value<int>()->default_value("0x000000"))
-        ("STREAMLINE_SPARSE", "set how many streamlines there are every x lattice points", cxxopts::value<int>()->default_value("4"))
-        ("STREAMLINE_LENGTH", "set maximum length of streamlines", cxxopts::value<int>()->default_value("128"))
-        ("TRANSPARENCY", "semi-transparent rendering, number represents transparency (equal to 1-opacity). 0=disabled", cxxopts::value<bool>()->default_value("0"))
-	//FRAME_WIDTH\|FRAME_HEIGHT\|BACKGROUND_COLOR\|STREAMLINE_SPARSE\|STREAMLINE_LENGTH\|FRAME_WIDTH
-	//FRAME_WIDTH|FRAME_HEIGHT|BACKGROUND_COLOR|STREAMLINE_SPARSE|STREAMLINE_LENGTH|FRAME_WIDTH
-
-        ("D2Q9", "Use D2Q9 #define", cxxopts::value<bool>()->default_value("false"))
-        ("D3Q15", "Use D3Q15 #define", cxxopts::value<bool>()->default_value("false"))
-        ("D3Q19", "Use D3Q19 #define", cxxopts::value<bool>()->default_value("false"))
-        ("D3Q27", "Use D3Q27 #define", cxxopts::value<bool>()->default_value("false"))
-
-        ("SRT", "Use SRT #define", cxxopts::value<bool>()->default_value("false"))
-        ("TRT", "Use TRT #define", cxxopts::value<bool>()->default_value("false"))
-        ("floor", "Insert a solid floor", cxxopts::value<bool>()->default_value("false"))
-        ("allowsleep", "Do not prevent PC from sleeping", cxxopts::value<bool>()->default_value("false"))
-
-        ("d,display", "Display", cxxopts::value<std::string>()->default_value("0,1"));
-
-    try {
-    //auto result = options.parse(argc, argv);
-#if defined(_WIN32)
-     g_args = options.parse(new_argv.size(), new_argv.data());
-#else
-    g_args = options.parse(argc, argv);
-#endif
-
-    std::cerr << "parsed ok1" << std::endl;
-
-    if (g_args.count("help")) {
-	//info.print_logo();
-        std::cout << options.help() << std::endl;
-        exit(0);
-    }
-
-    if (!g_args["pause"].as<bool>()) key_P= true;
-
-    if(g_args["FP16S"].as<bool>() || g_args["FP16C"].as<bool>()) fpxxsize=16; //  g_args.set_option_value("fpxxsize", "16"); // g_args["fpxxsize"] = cxxopts::value<unsigned int>()->default_value("16");
-    else fpxxsize=32; // g_args.set_option_value("fpxxsize", "32"); //g_args["fpxxsize"] = cxxopts::value<unsigned int>()->default_value("32");
-
-    if (g_args["D2Q9"].as<bool>()) {
-	velocity_set = 9u;
-	dimensions = 2u;
-	transfers = 3u;
-    } else if (g_args["D3Q15"].as<bool>()) {
-	velocity_set = 15u;
-	dimensions = 3u;
-	transfers = 5u;
-    } else if (g_args["D3Q19"].as<bool>()) {
-	velocity_set = 19u;
-	dimensions = 3u;
-	transfers = 5u;
-    } else if (g_args["D3Q27"].as<bool>()) {
-	velocity_set = 27u;
-	dimensions = 3u;
-	transfers = 9u;
-    } else {
-        std::cerr << "Must pick one of --D3Q15 --D3Q19 --D3Q27 or --D2Q9" << std::endl;
-        exit(1);
-    }
-
-    std::cerr << "parsed ok2" << std::endl;
-
-    if (g_args["BENCHMARK"].as<bool>() && (
-	  g_args["UPDATE_FIELDS"].as<bool>() ||
-	  g_args["VOLUME_FORCE"].as<bool>() ||
-	  g_args["FORCE_FIELD"].as<bool>() ||
-	  g_args["MOVING_BOUNDARIES"].as<bool>() ||
-	  g_args["EQUILIBRIUM_BOUNDARIES"].as<bool>() ||
-	  g_args["SURFACE"].as<bool>() ||
-	  g_args["TEMPERATURE"].as<bool>() ||
-	  g_args["SUBGRID"].as<bool>() ||
-	  g_args["PARTICLES"].as<bool>() ||
-	  g_args["GRAPHICS"].as<bool>() ||
-	  g_args["GRAPHICS_ASCII"].as<bool>() ) ) {
-        std::cout << "To use --BENCHMARK, be sure NOT to use any of: BENCHMARK, UPDATE_FIELDS, VOLUME_FORCE, FORCE_FIELD, MOVING_BOUNDARIES, EQUILIBRIUM_BOUNDARIES, SURFACE, TEMPERATURE, SUBGRID, PARTICLES, GRAPHICS, GRAPHICS_ASCII" << std::endl;
-        exit(0);
-    }
-
-    std::cerr << "parsed ok3" << std::endl;
-
-    GRAPHICS_BACKGROUND_COLOR=g_args["BACKGROUND_COLOR"].as<int>();
-
-
-
-    } catch(const std::exception& e) {
-        std::cerr << "Error parsing options: " << e.what() << std::endl;
-        std::cerr << options.help() << std::endl;
-        exit(1);
-    }
-
-/*
-        if (g_args.count("file")) {
-            std::string filename = g_args["file"].as<std::string>();
-            std::cout << "File: " << filename << std::endl;
-        }
-
-    } catch (const cxxopts::OptionException& e) {
-        std::cerr << "Error parsing options: " << e.what() << std::endl;
-        std::cerr << options.help() << std::endl;
-        exit(1);
-    }
-
-*/
-
-
-
-    /*
-
-    float x = g_args["x"].as<float>();
-    float y = g_args["y"].as<float>();
-    float z = g_args["z"].as<float>();
-    unsigned int resolution = g_args["r"].as<unsigned int>();
-    float re = g_args["re"].as<float>();
-    float u = g_args["u"].as<float>();
-    unsigned int time = g_args["t"].as<unsigned int>();
-    float scale = g_args["scale"].as<float>();
-    std::string filename = g_args["f"].as<std::string>();
-    float aoa = g_args["a"].as<float>();
-    float camx = g_args["camx"].as<float>();
-    float camy = g_args["camy"].as<float>();
-    float camz = g_args["camz"].as<float>();
-    float camzoom = g_args["camzoom"].as<float>();
-    float camrx = g_args["camrx"].as<float>();
-    float camry = g_args["camry"].as<float>();
-    float camfov = g_args["camfov"].as<float>();
-    float secs = g_args["s"].as<float>();
-    std::string display = g_args["d"].as<std::string>();
-
-    */
-
-    std::cerr << "parsed ok4" << std::endl;
-
-    if (g_args.count("d")) {
-      std::string d_param = g_args["d"].as<std::string>();
-      std::istringstream tokenStream(d_param);
-      std::string token;
-      vector<string> main_arguments; // original console arguments
-      while (std::getline(tokenStream, token, ',')) {
-        main_arguments.push_back(token);
-      }
-    std::cerr << "parsed ok4" << std::endl;
-      return main_arguments;
-    } else {
-    std::cerr << "parsed ok5" << std::endl;
-      return vector<string>();
-    }
-}
 
 inline string to_string(const string& s){
 	return s;
@@ -3366,6 +3155,7 @@ inline int colorscale_twocolor(const float x, const int background_color) { // c
 #endif // Windows/Linux
 #endif // UTILITIES_CONSOLE_COLOR
 #ifdef UTILITIES_CONSOLE_COLOR
+
 inline string get_exe_path() { // returns path where executable is located, ends with a "/"
 	string path = "";
 #if defined(_WIN32)
@@ -3386,6 +3176,249 @@ inline string get_exe_path() { // returns path where executable is located, ends
 #endif // Windows/Linux
 	return path.substr(0, path.rfind('/')+1);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+inline vector<string> get_main_arguments(int argc, char* argv[]) {
+	// return argc>1 ? vector<string>(argv+1, argv+argc) : vector<string>();
+
+#if defined(_WIN32)
+        // Adjust arguments to replace / with - for cxxopts
+        std::vector<std::string> args(argv, argv + argc);
+        for (auto& arg : args) { if (arg[0] == '/') { arg[0] = '-'; } }
+        std::vector<char*> new_argv;
+        for (auto& arg : args) { new_argv.push_back(const_cast<char*>(arg.c_str())); }
+#endif
+
+    cxxopts::Options options(argv[0], "Lattice Boltzmann CFD software by Dr. Moritz Lehmann");
+
+    options.add_options()
+        ("h,help", "Print help")
+        ("f,file", "input .stl mesh Filename", cxxopts::value<std::string>()->default_value("input.stl"))
+        ("rotx", "X deg rotation of input mesh", cxxopts::value<float>()->default_value("0.0"))
+        ("roty", "Y deg rotation of input mesh", cxxopts::value<float>()->default_value("0.0"))
+        ("rotz", "Z deg rotation of input mesh", cxxopts::value<float>()->default_value("0.0"))
+
+        ("trx", "X translate input mesh", cxxopts::value<float>()->default_value("0.0"))
+        ("try", "Y translate input mesh", cxxopts::value<float>()->default_value("0.0"))
+        ("trz", "Z translate input mesh", cxxopts::value<float>()->default_value("0.0"))
+
+        ("x", "X width of sim box", cxxopts::value<float>()->default_value("1.0"))
+        ("y", "Y length of sim box", cxxopts::value<float>()->default_value("1.0"))
+        ("z", "Z height of sim box", cxxopts::value<float>()->default_value("1.0"))
+        ("r,resolution", "Resolution", cxxopts::value<unsigned int>()->default_value("4096"))
+        ("re", "Reynolds number", cxxopts::value<float>()->default_value("100000.0"))
+        ("u", "Velocity in m/s", cxxopts::value<float>()->default_value("5.0"))
+        ("c,cord", "Cord (length of STL) in meters", cxxopts::value<float>()->default_value("1.0"))
+        ("t,time", "Time", cxxopts::value<unsigned int>()->default_value("10000"))
+        ("scale", "Scale", cxxopts::value<float>()->default_value("0.9"))
+        ("a,aoa", "Angle of attack degrees (- to climb)", cxxopts::value<float>()->default_value("0.0"))
+        ("camx", "Camera X", cxxopts::value<float>()->default_value("19.0"))
+        ("camy", "Camera Y", cxxopts::value<float>()->default_value("19.1"))
+        ("camz", "Camera Z", cxxopts::value<float>()->default_value("19.2"))
+        ("camzoom", "Camera Zoom", cxxopts::value<float>()->default_value("1.0"))
+        ("camrx", "Camera Rotation X", cxxopts::value<float>()->default_value("33.0"))
+        ("camry", "Camera Rotation Y", cxxopts::value<float>()->default_value("42.0"))
+        ("camfov", "Camera Field of View", cxxopts::value<float>()->default_value("68.0"))
+        ("s,secs", "Seconds", cxxopts::value<float>()->default_value("10.0"))
+        ("w,window", "Enable window instead of fullscreen mode", cxxopts::value<bool>()->default_value("false"))
+        ("wait", "Wait for keypress befor ending", cxxopts::value<bool>()->default_value("false"))
+        ("pause", "Do not auto-start the simulation", cxxopts::value<bool>()->default_value("false"))
+        ("fps", "Frames per Second for video output (see also --realtime)", cxxopts::value<float>()->default_value("25.0"))
+        ("realtime", "Save every frame to video output", cxxopts::value<bool>()->default_value("false"))
+        ("slomo", "What speed the video plays at 1=realtime 10=10x slower", cxxopts::value<float>()->default_value("1.0"))
+        ("export", "Folder name to save images and data into", cxxopts::value<std::string>()->default_value(get_exe_path()+"export/"))
+
+        ("SUBGRID", "Use SUBGRID #define", cxxopts::value<bool>()->default_value("false"))
+        ("VOLUME_FORCE", "Use VOLUME_FORCE #define", cxxopts::value<bool>()->default_value("false"))
+        ("FORCE_FIELD", "Use FORCE_FIELD #define", cxxopts::value<bool>()->default_value("false"))
+        ("PARTICLES", "Use PARTICLES #define", cxxopts::value<bool>()->default_value("false"))
+        ("TEMPERATURE", "Use TEMPERATURE #define", cxxopts::value<bool>()->default_value("false"))
+        ("UPDATE_FIELDS", "Use UPDATE_FIELDS #define", cxxopts::value<bool>()->default_value("false"))
+        ("MOVING_BOUNDARIES", "Use MOVING_BOUNDARIES #define", cxxopts::value<bool>()->default_value("false"))
+        ("EQUILIBRIUM_BOUNDARIES", "Use EQUILIBRIUM_BOUNDARIES #define", cxxopts::value<bool>()->default_value("false"))
+        ("SURFACE", "Use SURFACE #define", cxxopts::value<bool>()->default_value("false"))
+        ("FP16S", "Use FP16S #define", cxxopts::value<bool>()->default_value("false"))
+        ("FP16C", "Use FP16C #define", cxxopts::value<bool>()->default_value("false"))
+        ("BENCHMARK", "Run GPU Benchmark. See --FP16C and --FP16S too", cxxopts::value<bool>()->default_value("false"))
+
+        ("GRAPHICS", "Use interactive graphics (see also --window)", cxxopts::value<bool>()->default_value("false"))
+        ("GRAPHICS_ASCII", "Use interactive console (text) graphics", cxxopts::value<bool>()->default_value("false"))
+        ("FRAME_WIDTH", "Screen or Window resolution width", cxxopts::value<int>()->default_value("1920"))
+        ("FRAME_HEIGHT", "Screen or Window resolution height", cxxopts::value<int>()->default_value("1080"))
+        ("BACKGROUND_COLOR", "Screen background color", cxxopts::value<int>()->default_value("0x000000"))
+        ("STREAMLINE_SPARSE", "set how many streamlines there are every x lattice points", cxxopts::value<int>()->default_value("4"))
+        ("STREAMLINE_LENGTH", "set maximum length of streamlines", cxxopts::value<int>()->default_value("128"))
+        ("TRANSPARENCY", "semi-transparent rendering, number represents transparency (equal to 1-opacity). 0=disabled", cxxopts::value<bool>()->default_value("0"))
+	//FRAME_WIDTH\|FRAME_HEIGHT\|BACKGROUND_COLOR\|STREAMLINE_SPARSE\|STREAMLINE_LENGTH\|FRAME_WIDTH
+	//FRAME_WIDTH|FRAME_HEIGHT|BACKGROUND_COLOR|STREAMLINE_SPARSE|STREAMLINE_LENGTH|FRAME_WIDTH
+
+        ("D2Q9", "Use D2Q9 #define", cxxopts::value<bool>()->default_value("false"))
+        ("D3Q15", "Use D3Q15 #define", cxxopts::value<bool>()->default_value("false"))
+        ("D3Q19", "Use D3Q19 #define", cxxopts::value<bool>()->default_value("false"))
+        ("D3Q27", "Use D3Q27 #define", cxxopts::value<bool>()->default_value("false"))
+
+        ("SRT", "Use SRT #define", cxxopts::value<bool>()->default_value("false"))
+        ("TRT", "Use TRT #define", cxxopts::value<bool>()->default_value("false"))
+        ("floor", "Insert a solid floor", cxxopts::value<bool>()->default_value("false"))
+        ("allowsleep", "Do not prevent PC from sleeping", cxxopts::value<bool>()->default_value("false"))
+
+        ("d,display", "Display", cxxopts::value<std::string>()->default_value("0,1"));
+
+    try {
+    //auto result = options.parse(argc, argv);
+#if defined(_WIN32)
+     g_args = options.parse(new_argv.size(), new_argv.data());
+#else
+    g_args = options.parse(argc, argv);
+#endif
+
+    std::cerr << "parsed ok1" << std::endl;
+
+    if (g_args.count("help")) {
+	//info.print_logo();
+        std::cout << options.help() << std::endl;
+        exit(0);
+    }
+
+    if (!g_args["pause"].as<bool>()) key_P= true;
+
+    EXPORT_PATH=g_args["export"].as<std::string>();
+
+    if(g_args["FP16S"].as<bool>() || g_args["FP16C"].as<bool>()) fpxxsize=16; //  g_args.set_option_value("fpxxsize", "16"); // g_args["fpxxsize"] = cxxopts::value<unsigned int>()->default_value("16");
+    else fpxxsize=32; // g_args.set_option_value("fpxxsize", "32"); //g_args["fpxxsize"] = cxxopts::value<unsigned int>()->default_value("32");
+
+    if (g_args["D2Q9"].as<bool>()) {
+	velocity_set = 9u;
+	dimensions = 2u;
+	transfers = 3u;
+    } else if (g_args["D3Q15"].as<bool>()) {
+	velocity_set = 15u;
+	dimensions = 3u;
+	transfers = 5u;
+    } else if (g_args["D3Q19"].as<bool>()) {
+	velocity_set = 19u;
+	dimensions = 3u;
+	transfers = 5u;
+    } else if (g_args["D3Q27"].as<bool>()) {
+	velocity_set = 27u;
+	dimensions = 3u;
+	transfers = 9u;
+    } else {
+        std::cerr << "Must pick one of --D3Q15 --D3Q19 --D3Q27 or --D2Q9" << std::endl;
+        exit(1);
+    }
+
+    std::cerr << "parsed ok2" << std::endl;
+
+    if (g_args["BENCHMARK"].as<bool>() && (
+	  g_args["UPDATE_FIELDS"].as<bool>() ||
+	  g_args["VOLUME_FORCE"].as<bool>() ||
+	  g_args["FORCE_FIELD"].as<bool>() ||
+	  g_args["MOVING_BOUNDARIES"].as<bool>() ||
+	  g_args["EQUILIBRIUM_BOUNDARIES"].as<bool>() ||
+	  g_args["SURFACE"].as<bool>() ||
+	  g_args["TEMPERATURE"].as<bool>() ||
+	  g_args["SUBGRID"].as<bool>() ||
+	  g_args["PARTICLES"].as<bool>() ||
+	  g_args["GRAPHICS"].as<bool>() ||
+	  g_args["GRAPHICS_ASCII"].as<bool>() ) ) {
+        std::cout << "To use --BENCHMARK, be sure NOT to use any of: BENCHMARK, UPDATE_FIELDS, VOLUME_FORCE, FORCE_FIELD, MOVING_BOUNDARIES, EQUILIBRIUM_BOUNDARIES, SURFACE, TEMPERATURE, SUBGRID, PARTICLES, GRAPHICS, GRAPHICS_ASCII" << std::endl;
+        exit(0);
+    }
+
+    std::cerr << "parsed ok3" << std::endl;
+
+    GRAPHICS_BACKGROUND_COLOR=g_args["BACKGROUND_COLOR"].as<int>();
+
+
+
+    } catch(const std::exception& e) {
+        std::cerr << "Error parsing options: " << e.what() << std::endl;
+        std::cerr << options.help() << std::endl;
+        exit(1);
+    }
+
+/*
+        if (g_args.count("file")) {
+            std::string filename = g_args["file"].as<std::string>();
+            std::cout << "File: " << filename << std::endl;
+        }
+
+    } catch (const cxxopts::OptionException& e) {
+        std::cerr << "Error parsing options: " << e.what() << std::endl;
+        std::cerr << options.help() << std::endl;
+        exit(1);
+    }
+
+*/
+
+
+
+    /*
+
+    float x = g_args["x"].as<float>();
+    float y = g_args["y"].as<float>();
+    float z = g_args["z"].as<float>();
+    unsigned int resolution = g_args["r"].as<unsigned int>();
+    float re = g_args["re"].as<float>();
+    float u = g_args["u"].as<float>();
+    unsigned int time = g_args["t"].as<unsigned int>();
+    float scale = g_args["scale"].as<float>();
+    std::string filename = g_args["f"].as<std::string>();
+    float aoa = g_args["a"].as<float>();
+    float camx = g_args["camx"].as<float>();
+    float camy = g_args["camy"].as<float>();
+    float camz = g_args["camz"].as<float>();
+    float camzoom = g_args["camzoom"].as<float>();
+    float camrx = g_args["camrx"].as<float>();
+    float camry = g_args["camry"].as<float>();
+    float camfov = g_args["camfov"].as<float>();
+    float secs = g_args["s"].as<float>();
+    std::string display = g_args["d"].as<std::string>();
+
+    */
+
+    std::cerr << "parsed ok4" << std::endl;
+
+    if (g_args.count("d")) {
+      std::string d_param = g_args["d"].as<std::string>();
+      std::istringstream tokenStream(d_param);
+      std::string token;
+      vector<string> main_arguments; // original console arguments
+      while (std::getline(tokenStream, token, ',')) {
+        main_arguments.push_back(token);
+      }
+    std::cerr << "parsed ok4" << std::endl;
+      return main_arguments;
+    } else {
+    std::cerr << "parsed ok5" << std::endl;
+      return vector<string>();
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 inline void get_console_size(uint& width, uint& height) {
 #if defined(_WIN32)
 	static const HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);

@@ -1674,13 +1674,14 @@ void main_setup() { // input parameter drivern sim; 					required extensions in 
 		if(key_O) {
 		  // info.allow_labeling ?
 		  float sim_time= units.si_t(1ull)==1.0f ? info.lbm->get_t() : units.si_t(info.lbm->get_t());
-		  if(sim_time >= next_frame_time) {
+		  if((sim_time >= next_frame_time) || g_args["realtime"].as<bool>() ) {
 		    if(next_frame_time < 0.0f) next_frame_time =sim_time + (1.0f/g_args["fps"].as<float>())/g_args["slomo"].as<float>(); // First frame
 		    else next_frame_time+=(1.0f/g_args["fps"].as<float>())/g_args["slomo"].as<float>();
 
 		    lbm.graphics.write_frame();
 		    // key_O=false;
-		    std::cout <<std::endl << " step=" << lbm.get_t() << " time(s)=" << sim_time << " allow_labeling=" << info.allow_labeling << " allow_rendering=" << info.allow_rendering << " next_frame_time=" << next_frame_time;
+		    //std::cout <<std::endl << " step=" << lbm.get_t() << " time(s)=" << sim_time << " allow_labeling=" << info.allow_labeling << " allow_rendering=" << info.allow_rendering << " next_frame_time=" << next_frame_time;
+		    std::cout << " step=" << lbm.get_t() << " time(s)=" << sim_time << " allow_labeling=" << info.allow_labeling << " allow_rendering=" << info.allow_rendering << " next_frame_time=" << next_frame_time <<std::endl;
                   }
 		}
 		lbm.run(1u);

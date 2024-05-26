@@ -7,6 +7,7 @@ int fpxxsize=32; // gets set to 16 if --FS16* switch passed
 extern bool key_P;
 extern bool key_O;
 int GRAPHICS_BACKGROUND_COLOR; // for speed - used every frame
+std::string EXPORT_PATH;
 
 #ifdef GRAPHICS
 void draw_scale(const int field_mode, const int color) {
