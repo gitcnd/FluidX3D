@@ -3232,7 +3232,7 @@ inline vector<string> get_main_arguments(int argc, char* argv[]) {
         ("camfov", "Camera Field of View", cxxopts::value<float>()->default_value("68.0"))
         ("s,secs", "Seconds", cxxopts::value<float>()->default_value("10.0"))
         ("w,window", "Enable window instead of fullscreen mode", cxxopts::value<bool>()->default_value("false"))
-        ("wait", "Wait for keypress befor ending", cxxopts::value<bool>()->default_value("false"))
+        ("wait", "Wait for keypress before ending", cxxopts::value<bool>()->default_value("false"))
         ("pause", "Do not auto-start the simulation", cxxopts::value<bool>()->default_value("false"))
         ("fps", "Frames per Second for video output (see also --realtime)", cxxopts::value<float>()->default_value("25.0"))
         ("realtime", "Save every frame to video output", cxxopts::value<bool>()->default_value("false"))
