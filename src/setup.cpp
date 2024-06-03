@@ -369,14 +369,17 @@ void main_setup() { // NASA Common Research Model; 					required extensions in d
 
 
 #ifdef DEMO_CONCORDE //cnd
+
+start "cmd.exe '/c mode con: lines=80 & powershell -Command \"& { [console]::BufferWidth = 160; [console]::BufferHeight = 9999 }\" & bin\FluidX3D.exe -f stl/concord_cut_large.stl --FP16S --EQUILIBRIUM_BOUNDARIES --SUBGRID  -r 2048     --roty 90 --rotz 90  --try -0.9 -c 34 -u 63 --aoa -10 --fps 60 --SRT --UPDATE_FIELDS --GRAPHICS --D3Q19 --export png/ --slomo 100 --scale 1 --width 1.0 --length 3.0 --height 0.5 & pause'"
+
 void main_setup() { // Concorde; 							required extensions in defines.hpp: FP16S, EQUILIBRIUM_BOUNDARIES, SUBGRID, INTERACTIVE_GRAPHICS
 	// ################################################################## define simulation box size, viscosity and volume force ###################################################################
 	//const uint3 lbm_N = resolution(float3(1.0f,                    3.0f,                    0.5f),                    2084u); // input: simulation box aspect ratio and VRAM occupation in MB, output: grid resolution
 	const uint3 lbm_N = resolution(float3(g_args["x"].as<float>(), g_args["y"].as<float>(), g_args["z"].as<float>()), g_args["r"].as<unsigned int>() ); // input: simulation box aspect ratio and VRAM occupation in MB, output: grid resolution // cnd changed grid from 880u to 1880u
 
-	const float si_u = 300.0f/3.6f;
-	const float si_length=62.0f, si_width=26.0f;
-	const float si_T = 1.0f;
+	const float si_u = 300.0f/3.6f;			// velocity in m/s  (300kmh is 83 m/s) ... 300kmh is an actual concord landing speed - the slowest it ever flies at.
+	const float si_length=62.0f, si_width=26.0f;	// Actual size (25.6m wide really)
+	const float si_T = 1.0f;			// time in seconds
 	const float si_nu=1.48E-5f, si_rho=1.225f;	// kinematic shear viscosity nu = x*u/Re = [m^2/s]
 	const float lbm_length =  g_args["scale"].as<float>()*0.56f*(float)lbm_N.y;
 	const float lbm_u = 0.1f;
@@ -1617,7 +1620,7 @@ void main_setup() { // input parameter drivern sim; 					required extensions in 
 	const float si_u = g_args["u"].as<float>();	// velocity in m/s			was 1.0f
 	const float si_length = g_args["c"].as<float>();// cord or stl length in meters		was 2.4f
 	const float si_T = 10.0f;			// time in seconds
-	const float si_nu=1.48E-5f;			// kinematic viscosity in m^2/s
+	const float si_nu=1.48E-5f;			// kinematic viscosity in m^2/s		nu = x*u/Re
 	const float si_rho=1.225f;			// density in kg/m^3
 	//const float lbm_length = 0.65f*(float)lbm_N.y; 
 	const float lbm_length =  g_args["scale"].as<float>()*0.56f*(float)lbm_N.y; // the length of the stl in LBM units. The value itself is in simulation grid units.
@@ -1626,7 +1629,8 @@ void main_setup() { // input parameter drivern sim; 					required extensions in 
 	units.set_m_kg_s(lbm_length, lbm_u, 1.0f, si_length, si_u, si_rho);
 	print_info("Re = "+to_string(to_uint(units.si_Re(si_length, si_u, si_nu))));	// 
 	// D2Q9?
-	LBM lbm(lbm_N, units.nu(si_nu));
+	//? LBM lbm(lbm_N, units.nu(si_nu)); // from cow
+	LBM lbm(lbm_N, 1u, 1u, 1u, units.nu(si_nu)); // from concorde
 
 	// ###################################################################################### define geometry ######################################################################################
 	//const float3x3 rotation = float3x3(float3(1, 0, 0), radians(180.0f))*float3x3(float3(0, 0, 1), radians(180.0f)); // undersurface first
@@ -1672,12 +1676,13 @@ void main_setup() { // input parameter drivern sim; 					required extensions in 
 		// info.allow_rendering
 		// Simulation Time: draw_label(ox, oy+i, "Simulation Time "+alignr(21u, /**************************************/ (units.si_t(1ull)==1.0f?to_string(info.lbm->get_t()):to_string(units.si_t(info.lbm->get_t()), 6u))+"s"), c); i+=FONT_HEIGHT;
 		if(key_O) {
-		  // info.allow_labeling ?
+		  info.allow_labeling = true; // render what they want to show
 		  float sim_time= units.si_t(1ull)==1.0f ? info.lbm->get_t() : units.si_t(info.lbm->get_t());
 		  if((sim_time >= next_frame_time) || g_args["realtime"].as<bool>() ) {
 		    if(next_frame_time < 0.0f) next_frame_time =sim_time + (1.0f/g_args["fps"].as<float>())/g_args["slomo"].as<float>(); // First frame
 		    else next_frame_time+=(1.0f/g_args["fps"].as<float>())/g_args["slomo"].as<float>();
 
+		    info.allow_labeling = true; // render what they want to show
 		    lbm.graphics.write_frame();
 		    // key_O=false;
 		    //std::cout <<std::endl << " step=" << lbm.get_t() << " time(s)=" << sim_time << " allow_labeling=" << info.allow_labeling << " allow_rendering=" << info.allow_rendering << " next_frame_time=" << next_frame_time;

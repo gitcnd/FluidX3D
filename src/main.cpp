@@ -73,7 +73,7 @@ void main_label(const double frametime) {
 			const double pn=(double)info.lbm->get_N(), mt=(double)bandwidth_bytes_per_cell_device();
 			draw_label(ox, oy+i, "Resolution "     +alignr(26u, /********/ to_string(info.lbm->get_Nx())+"x"+to_string(info.lbm->get_Ny())+"x"+to_string(info.lbm->get_Nz())+" = "+to_string(info.lbm->get_N())), c); i+=FONT_HEIGHT;
 			//draw_label(ox, oy+i, "Volume Force "   +alignr(16u, /***************************************************/ info.lbm->get_fx())+","+alignr(15, info.lbm->get_fy())+", "+alignr(15, info.lbm->get_fz()), c); i+=FONT_HEIGHT;
-			draw_label(ox, oy+i, "Kin. Viscosity " +alignr(22u, /***********************************************************************************************************/ to_string(info.lbm->get_nu(), 8u)), c); i+=FONT_HEIGHT;
+			draw_label(ox, oy+i, "Kin. Viscosity " +alignr(22u, /***********************************************************************************************************/ to_string(info.lbm->get_nu(), 9u)), c); i+=FONT_HEIGHT;
 			draw_label(ox, oy+i, "Relaxation Time "+alignr(21u, /**********************************************************************************************************/ to_string(info.lbm->get_tau(), 8u)), c); i+=FONT_HEIGHT;
 			draw_label(ox, oy+i, "Reynolds Number "+alignr(21u, /*********************************************************************/ "Re < "+string(Re>=100.0f ? to_string(to_uint(Re)) : to_string(Re, 6u))), c); i+=FONT_HEIGHT;
 			draw_label(ox, oy+i, "LBM Type "       +alignr(28u, /**************************/ "D"+to_string(info.lbm->get_velocity_set()==9u?2:3)+"Q"+to_string(info.lbm->get_velocity_set())+" "+info.collision), c); i+=FONT_HEIGHT;
