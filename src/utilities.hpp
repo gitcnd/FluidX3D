@@ -3257,7 +3257,7 @@ inline vector<string> get_main_arguments(int argc, char* argv[]) {
         ("FRAME_WIDTH", "Screen or Window resolution width", cxxopts::value<int>()->default_value("1920"))
         ("FRAME_HEIGHT", "Screen or Window resolution height", cxxopts::value<int>()->default_value("1080"))
         ("BACKGROUND_COLOR", "Screen background color", cxxopts::value<int>()->default_value("0x000000"))
-        ("STREAMLINE_SPARSE", "set how many streamlines there are every x lattice points", cxxopts::value<int>()->default_value("4"))
+        ("STREAMLINE_SPARSE", "set how many streamlines there are every x lattice points", cxxopts::value<int>()->default_value("8"))
         ("STREAMLINE_LENGTH", "set maximum length of streamlines", cxxopts::value<int>()->default_value("128"))
         ("TRANSPARENCY", "semi-transparent rendering, number represents transparency (equal to 1-opacity). 0=disabled", cxxopts::value<bool>()->default_value("0"))
 	//FRAME_WIDTH\|FRAME_HEIGHT\|BACKGROUND_COLOR\|STREAMLINE_SPARSE\|STREAMLINE_LENGTH\|FRAME_WIDTH
