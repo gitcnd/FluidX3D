@@ -3218,6 +3218,7 @@ inline vector<string> get_main_arguments(int argc, char* argv[]) {
 
         ("r,resolution", "Resolution", cxxopts::value<unsigned int>()->default_value("4096"))
         ("re", "Reynolds number", cxxopts::value<float>()->default_value("100000.0"))
+        ("rho", "Density kg/m^3", cxxopts::value<float>()->default_value("1.2226"))
         ("u", "Velocity in m/s", cxxopts::value<float>()->default_value("5.0"))
         ("c,cord", "Cord (length of STL) in meters", cxxopts::value<float>()->default_value("1.0"))
         ("t,time", "Time", cxxopts::value<unsigned int>()->default_value("10000"))

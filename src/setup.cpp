@@ -1576,11 +1576,11 @@ void main_setup() { // input parameter drivern sim; 					required extensions in 
     float next_frame_time = -1.0f; 	// When we reach (or pass) this, output a new .png frame when recording is on.
 
     // SI Units
-    float velocity_si = 5.0f; 		// m/s
-    float chord_length_si = 0.15f; 	// 150mm in meters
-    float span_length_si = 0.075f; 	// 300mm in meters
-    float reynolds_number_si = 50466;	// unitless
-    float air_density_si = 1.2226f; 	// kg/m^3
+    float velocity_si = g_args["u"].as<float>();		//	5.0f; 		// m/s
+    float chord_length_si = g_args["c"].as<float>();		//	0.15f; 	// 150mm in meters
+    //float span_length_si = 0.075f; 				// 300mm in meters
+    float reynolds_number_si = g_args["re"].as<float>();	//	50466;	// unitless
+    float air_density_si = g_args["rho"].as<float>();		//	1.2226f; 	// kg/m^3
     float dynamic_viscosity_si = (air_density_si * velocity_si * chord_length_si) / reynolds_number_si;
     float kinematic_viscosity_si = dynamic_viscosity_si / air_density_si;
 
@@ -1617,20 +1617,20 @@ void main_setup() { // input parameter drivern sim; 					required extensions in 
     //cow // ################################################################## define simulation box size, viscosity and volume force ###################################################################
     //cow const uint3 lbm_N = resolution(float3(1.0f, 2.0f, 1.0f), 1000u); // input: simulation box aspect ratio and VRAM occupation in MB, output: grid resolution
 
-	const float si_u = g_args["u"].as<float>();	// velocity in m/s			was 1.0f
-	const float si_length = g_args["c"].as<float>();// cord or stl length in meters		was 2.4f
+	//const float si_u = g_args["u"].as<float>();	// velocity in m/s			was 1.0f
+	//const float si_length = g_args["c"].as<float>();// cord or stl length in meters		was 2.4f
 	const float si_T = 10.0f;			// time in seconds
-	const float si_nu=1.48E-5f;			// kinematic viscosity in m^2/s		nu = x*u/Re
-	const float si_rho=1.225f;			// density in kg/m^3
+	//const float si_nu=1.48E-5f;			// kinematic viscosity in m^2/s		nu = x*u/Re
+	//const float si_rho=1.225f;			// density in kg/m^3
 	//const float lbm_length = 0.65f*(float)lbm_N.y; 
 	const float lbm_length =  g_args["scale"].as<float>()*0.56f*(float)lbm_N.y; // the length of the stl in LBM units. The value itself is in simulation grid units.
 	print_info("lbm_length = "+to_string(lbm_length, 6u));
 	const float lbm_u = 0.1f;			// the velocity in lattice units (lattice nodes per time step).
-	units.set_m_kg_s(lbm_length, lbm_u, 1.0f, si_length, si_u, si_rho);
-	print_info("Re = "+to_string(to_uint(units.si_Re(si_length, si_u, si_nu))));	// 
+	units.set_m_kg_s(lbm_length, lbm_u, 1.0f, chord_length_si, velocity_si, air_density_si);
+	print_info("Re = "+to_string(to_uint(units.si_Re(chord_length_si, velocity_si, kinematic_viscosity_si))));	// 
 	// D2Q9?
-	//? LBM lbm(lbm_N, units.nu(si_nu)); // from cow
-	LBM lbm(lbm_N, 1u, 1u, 1u, units.nu(si_nu)); // from concorde
+	//? LBM lbm(lbm_N, units.nu(kinematic_viscosity_si)); // from cow
+	LBM lbm(lbm_N, 1u, 1u, 1u, units.nu(kinematic_viscosity_si)); // from concorde
 
 	// ###################################################################################### define geometry ######################################################################################
 	//const float3x3 rotation = float3x3(float3(1, 0, 0), radians(180.0f))*float3x3(float3(0, 0, 1), radians(180.0f)); // undersurface first
